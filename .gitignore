@@ -1,0 +1,11 @@
+idea
+idea/*
+node_modules
+release
+dist
+yarn-error.log
+.DS_Store
+dist
+.npmrc
+build
+vendor
