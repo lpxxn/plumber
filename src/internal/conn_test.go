@@ -56,7 +56,10 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("Received message from client:", msg)
 
 		// Echo the message back to the client
-		conn.Write([]byte("Echo: " + msg))
+		if _, err := conn.Write([]byte("Echo: " + msg)); err != nil {
+			fmt.Println("Error writing to client:", err)
+			break
+		}
 	}
 
 	fmt.Println("Client disconnected:", conn.RemoteAddr())
@@ -79,6 +82,15 @@ func TestTCPClient(t *testing.T) {
 		tcpConn.SetKeepAlive(true)
 		tcpConn.SetKeepAlivePeriod(60 * time.Second)
 
+		go func() {
+			for {
+				time.Sleep(2 * time.Second)
+				if _, err := conn.Write([]byte("Hello")); err != nil {
+					fmt.Println("Error writing to server:", err)
+					break
+				}
+			}
+		}()
 		// Read messages from the server
 		buf := make([]byte, 1024)
 		for {
@@ -92,7 +104,6 @@ func TestTCPClient(t *testing.T) {
 			msg := string(buf[:n])
 			fmt.Println("Received message:", msg)
 		}
-
 		// Close the connection and retry after a delay
 		fmt.Println("Disconnected from server")
 		conn.Close()
