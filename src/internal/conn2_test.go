@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"testing"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -118,4 +119,69 @@ func (tunnel *SSHtunnel) forward(localConn net.Conn) {
 
 	go copyConn(localConn, remoteConn)
 	go copyConn(remoteConn, localConn)
+}
+
+func TestSSH2(t *testing.T) {
+	listener, err := net.Listen("tcp", ":7070")
+	if err != nil {
+		log.Fatalf("Error starting TCP server: %v", err)
+	}
+	defer listener.Close()
+
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Printf("Error accepting connection: %v", err)
+			continue
+		}
+		go handleConnection2(conn)
+	}
+}
+func handleConnection2(conn net.Conn) {
+	defer conn.Close()
+
+	sshConn, err := net.Dial("tcp", "127.0.0.1:22")
+	if err != nil {
+		log.Printf("Error connecting to local SSH port: %v", err)
+		return
+	}
+	defer sshConn.Close()
+
+	go io.Copy(conn, sshConn)
+	io.Copy(sshConn, conn)
+}
+
+func TestSSH3(t *testing.T) {
+	conn, err := net.Dial("tcp", "127.0.0.1:7070")
+	if err != nil {
+		log.Printf("Error connecting to local SSH port: %v", err)
+		return
+	}
+	defer conn.Close()
+	// Read messages from the client
+	go func() {
+		buf := make([]byte, 1024)
+		for {
+			n, err := conn.Read(buf)
+			if err != nil {
+				fmt.Println("Error reading from client:", err)
+				break
+			}
+
+			// Process the received message
+			msg := string(buf[:n])
+			fmt.Println("Received message from client:", msg)
+
+			// Echo the message back to the client
+			if _, err := conn.Write([]byte("Echo: " + msg)); err != nil {
+				fmt.Println("Error writing to client:", err)
+				break
+			}
+		}
+	}()
+	if _, err := conn.Write([]byte("ls -l\r\n")); err != nil {
+		log.Printf("Error writing to SSH port: %v", err)
+		return
+	}
+	time.Sleep(5 * time.Second)
 }
