@@ -1,26 +1,21 @@
 package main
 
 import (
+	"github.com/lpxxn/plumber/src/proxy"
 	"io"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":7070")
-	if err != nil {
-		log.Fatalf("Error starting TCP server: %v", err)
-	}
-	defer listener.Close()
-
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Printf("Error accepting connection: %v", err)
-			continue
-		}
-		go handleConnection2(conn)
-	}
+	proxy := proxy.NewSSHProxy("127.0.0.1:7700", "127.0.0.1:22")
+	proxy.Start()
+	// exit signal
+	ch := make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt)
+	<-ch
 }
 
 func handleConnection2(conn net.Conn) {
