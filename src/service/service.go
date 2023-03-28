@@ -1,11 +1,17 @@
 package service
 
-import "net"
+import (
+	"io"
+	"net"
+	"sync"
+
+	"github.com/lpxxn/plumber/src/log"
+)
 
 type Service struct {
 	SrvAddr  string
 	listener net.Listener
-	subCons  map[string]net.Conn
+	subCons  sync.Map
 }
 
 func NewService(srvAddr string) *Service {
@@ -30,33 +36,33 @@ func (s *Service) Start() {
 }
 
 func (s *Service) handleConnection(conn net.Conn) {
-	defer conn.Close()
-	s.subCons[conn.RemoteAddr().String()] = conn
+	buf := make([]byte, 4)
+	_, err := io.ReadFull(conn, buf)
+	if err != nil {
+		log.Errorf("read magic error: %v", err)
+		conn.Close()
+		return
+	}
+	magicStr := string(buf)
+	log.Infof("magicStr: %s", magicStr)
+	s.subCons.Store(conn.RemoteAddr().String(), conn)
 	// remove conn from subCons if conn is closed
 
 }
 
 // remove conn from subCons if conn is closed
 func (s *Service) removeConn(conn net.Conn) {
-	delete(s.subCons, conn.RemoteAddr().String())
+	s.subCons.Delete(conn.RemoteAddr().String())
+}
+
+func (s *Service) Close() {
+	s.subCons.Range(func(key, value interface{}) bool {
+		value.(net.Conn).Close()
+		return true
+	})
 }
 
 // monitor conn
 func (s *Service) monitorConn(conn net.Conn) {
-	for {
-		// read from conn
-		// if error, remove conn from subCons
-		data, err := conn.Read()
-		if err != nil {
-			s.removeConn(conn)
-			break
-		}
-		// if read data, send data to all subCons
-		for _, subConn := range s.subCons {
-			_, err := subConn.Write(data)
-			if err != nil {
-				s.removeConn(subConn)
-			}
-		}
-	}
+
 }

@@ -1,6 +1,8 @@
 package log
 
 import (
+	"os"
+
 	"github.com/natefinch/lumberjack"
 	"github.com/sirupsen/logrus"
 )
@@ -16,6 +18,21 @@ func init() {
 		MaxSize:    10, // megabytes
 		MaxBackups: 5,
 		MaxAge:     30, //days
+	}
+	logLevel := os.Getenv("LOG_LEVEL")
+	switch logLevel {
+	case "debug":
+		Log.SetLevel(logrus.DebugLevel)
+	case "info":
+		Log.SetLevel(logrus.InfoLevel)
+	case "warn":
+		Log.SetLevel(logrus.WarnLevel)
+	case "error":
+		Log.SetLevel(logrus.ErrorLevel)
+	case "fatal":
+		Log.SetLevel(logrus.FatalLevel)
+	default:
+		Log.SetLevel(logrus.InfoLevel)
 	}
 	Log.Infof("log init success")
 }
