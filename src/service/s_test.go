@@ -40,4 +40,24 @@ func TestBf(t *testing.T) {
 	writer.WriteString("hello world!")
 	writer.WriteString("abcdefg")
 	//writer.Flush()
+	exitChan := make(chan struct{})
+
+	select {
+	case <-exitChan:
+		// Channel is not closed
+	default:
+		// Channel is closed
+	}
+	close(exitChan)
+
+	//	close(exitChan) // error
+	if _, ok := <-exitChan; !ok {
+		t.Log("Channel is closed")
+	} else {
+		t.Log("Channel is not closed")
+	}
+
+	exitChan2 := make(chan struct{}, 1)
+	close(exitChan2)
+	close(exitChan2)
 }
