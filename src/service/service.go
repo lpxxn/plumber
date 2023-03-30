@@ -5,6 +5,7 @@ import (
 	"net"
 	"sync"
 
+	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
 )
 
@@ -45,9 +46,17 @@ func (s *Service) handleConnection(conn net.Conn) {
 	}
 	magicStr := string(buf)
 	log.Infof("magicStr: %s", magicStr)
-	s.subCons.Store(conn.RemoteAddr().String(), conn)
+	if magicStr != common.MagicString {
+		log.Errorf("magic string not match: %s", magicStr)
+		conn.Close()
+		return
+	}
+	client := NewClient(conn)
+	s.subCons.Store(conn.RemoteAddr(), client)
 	// remove conn from subCons if conn is closed
 
+	s.subCons.Delete(conn.RemoteAddr())
+	client.Close()
 }
 
 // remove conn from subCons if conn is closed
@@ -57,12 +66,18 @@ func (s *Service) removeConn(conn net.Conn) {
 
 func (s *Service) Close() {
 	s.subCons.Range(func(key, value interface{}) bool {
-		value.(net.Conn).Close()
+		value.(*client).Close()
 		return true
 	})
 }
 
-// monitor conn
-func (s *Service) monitorConn(conn net.Conn) {
+func IOLop(client *client) error {
 
+	// read data from client
+	for {
+
+	}
+	log.Infof("client(%s) host %s exit", client.Conn.RemoteAddr(), client.Hostname)
+	close(client.ExitChan)
+	return nil
 }
