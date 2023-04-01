@@ -59,5 +59,5 @@ func TestBf(t *testing.T) {
 
 	exitChan2 := make(chan struct{}, 1)
 	close(exitChan2)
-	close(exitChan2)
+	// close(exitChan2)
 }

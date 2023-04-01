@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/lpxxn/plumber/src/proxy"
 	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
+
+	"github.com/lpxxn/plumber/src/proxy"
 )
 
 func main() {
