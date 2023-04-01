@@ -45,6 +45,7 @@ type ILog interface {
 	Errorf(format string, args ...interface{})
 	Debugf(format string, args ...interface{})
 	Panicf(format string, args ...interface{})
+	Fatalf(format string, args ...interface{})
 }
 
 func Info(args ...interface{}) {
@@ -68,6 +69,10 @@ func Debugf(format string, args ...interface{}) {
 
 func Panicf(format string, args ...interface{}) {
 	plumberLog.Panicf(format, args...)
+}
+
+func Fatalf(format string, args ...interface{}) {
+	plumberLog.Fatalf(format, args...)
 }
 
 func For(ctx context.Context) ILog {
