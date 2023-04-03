@@ -136,3 +136,13 @@ b: val b
 `
 	Parse([]byte(s))
 }
+
+func TestSrvConf(t *testing.T) {
+	filePath, _ := filepath.Abs("./testdata/srv.yaml")
+	t.Log(filePath)
+	srvConf := NewSrvConf()
+	err := ReadFile(filePath, srvConf)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, srvConf.TCPAddr)
+	t.Log(srvConf)
+}

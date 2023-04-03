@@ -17,13 +17,12 @@ func readFile(filename string) ([]byte, error) {
 	return ioutil.ReadAll(f)
 }
 
-func ReadFile(filename string) error {
+func ReadFile(filename string, v interface{}) error {
 	body, err := readFile(filename)
 	if err != nil {
 		return err
 	}
-	v := map[string]interface{}{}
-	err = yaml.Unmarshal(body, &v)
+	err = yaml.Unmarshal(body, v)
 	log.Debugf("config: %v", v)
 	return nil
 }
