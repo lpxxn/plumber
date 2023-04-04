@@ -2,6 +2,7 @@ package log
 
 import (
 	"context"
+	"io"
 	"os"
 
 	"github.com/natefinch/lumberjack"
@@ -12,14 +13,15 @@ var plumberLog *logrus.Logger
 
 func init() {
 	plumberLog = logrus.New()
-	plumberLog.Formatter = &logrus.JSONFormatter{}
+	plumberLog.Formatter = &logrus.TextFormatter{ForceColors: true, FullTimestamp: true}
 	plumberLog.SetReportCaller(true)
-	plumberLog.Out = &lumberjack.Logger{
+	jackOut := &lumberjack.Logger{
 		Filename:   "logs/plumber.plumberLog",
 		MaxSize:    10, // megabytes
 		MaxBackups: 5,
 		MaxAge:     30, //days
 	}
+	plumberLog.SetOutput(io.MultiWriter(jackOut, os.Stdout))
 	logLevel := os.Getenv("LOG_LEVEL")
 	switch logLevel {
 	case "debug":

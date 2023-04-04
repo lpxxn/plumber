@@ -21,12 +21,14 @@ func NewService(srvAddr string) *Service {
 	}
 }
 
-func (s *Service) Start() {
+func (s *Service) Run() {
 	var err error
 	s.listener, err = net.Listen("tcp", s.SrvAddr)
 	if err != nil {
 		panic(err)
 	}
+	log.Infof("listen on %s", s.SrvAddr)
+	log.Infof("start to accept connections")
 	for {
 		conn, err := s.listener.Accept()
 		if err != nil {
