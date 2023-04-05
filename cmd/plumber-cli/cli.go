@@ -6,13 +6,10 @@ import (
 	"net"
 	"os"
 	"os/signal"
-
-	"github.com/lpxxn/plumber/src/proxy"
 )
 
 func main() {
-	proxy := proxy.NewSSHProxyClient("127.0.0.1:7700", "127.0.0.1:22")
-	proxy.Start()
+
 	// exit signal
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt)
