@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	MagicString = "Go"
+	MagicString = "GoV1"
 )
 
 var SeparatorBytes = []byte(" ")

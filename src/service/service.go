@@ -13,6 +13,8 @@ type Service struct {
 	SrvAddr  string
 	listener net.Listener
 	subCons  sync.Map
+	// tcp listener map[localPort]listener
+	TcpListenerMap map[int]net.Listener
 }
 
 func NewService(srvAddr string) *Service {
@@ -57,6 +59,7 @@ func (s *Service) handleConnection(conn net.Conn) {
 	s.subCons.Store(conn.RemoteAddr(), client)
 	// remove conn from subCons if conn is closed
 
+	<-client.ExitChan
 	s.subCons.Delete(conn.RemoteAddr())
 	client.Close()
 }
