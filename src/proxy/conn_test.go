@@ -5,6 +5,8 @@ import (
 	"net"
 	"testing"
 	"time"
+
+	"github.com/lpxxn/plumber/src/common"
 )
 
 func TestTCPServer(t *testing.T) {
@@ -109,5 +111,25 @@ func TestTCPClient(t *testing.T) {
 		conn.Close()
 		time.Sleep(time.Second)
 	}
+}
 
+func TestAddr(t *testing.T) {
+	h, p, err := net.SplitHostPort("127.0.0.1")
+	t.Logf("h=%s, p=%s, err=%v", h, p, err)
+	h, p, err = net.SplitHostPort("127.0.1:123")
+	t.Logf("h=%s, p=%s, err=%v", h, p, err)
+	h, p, err = net.SplitHostPort("127.0.0.1:80")
+	t.Logf("h=%s, p=%s, err=%v", h, p, err)
+
+	fc := func(addr string) {
+		tcpAddr, err := common.TcpAddr(addr)
+		t.Log(tcpAddr, err)
+		h, p, err = net.SplitHostPort(tcpAddr.String())
+		t.Logf("h=%s, p=%s, err=%v", h, p, err)
+	}
+	fc("")
+	fc(":123")
+	fc("127.0.1:123")
+	fc("127.0.0.1")
+	fc("127.0.0.1:22")
 }

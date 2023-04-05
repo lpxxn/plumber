@@ -1,6 +1,11 @@
 package common
 
-import "sync"
+import (
+	"net"
+	"sync"
+
+	"github.com/lpxxn/plumber/src/log"
+)
 
 const (
 	MagicString = "Go"
@@ -18,4 +23,14 @@ func (w *WaitGroup) WaitFunc(f func()) {
 		f()
 		w.Done()
 	}()
+}
+
+func TcpAddr(addrStr string) (*net.TCPAddr, error) {
+	tcpAddr, err := net.ResolveTCPAddr("tcp", addrStr)
+	if err != nil {
+		log.Errorf("Error resolving TCP address: %v\n", err)
+		return tcpAddr, err
+	}
+	log.Infof("TCP address is valid: %v\n", tcpAddr)
+	return tcpAddr, nil
 }
