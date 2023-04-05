@@ -9,35 +9,35 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var plumberLog *logrus.Logger
+var log *logrus.Logger
 
 func init() {
-	plumberLog = logrus.New()
-	plumberLog.Formatter = &logrus.TextFormatter{ForceColors: true, FullTimestamp: true}
-	plumberLog.SetReportCaller(true)
+	log = logrus.New()
+	log.Formatter = &logrus.TextFormatter{ForceColors: true, FullTimestamp: true}
+	log.SetReportCaller(true)
 	jackOut := &lumberjack.Logger{
-		Filename:   "logs/plumber.plumberLog",
+		Filename:   "logs/plumber.log",
 		MaxSize:    10, // megabytes
 		MaxBackups: 5,
 		MaxAge:     30, //days
 	}
-	plumberLog.SetOutput(io.MultiWriter(jackOut, os.Stdout))
+	log.SetOutput(io.MultiWriter(jackOut, os.Stdout))
 	logLevel := os.Getenv("LOG_LEVEL")
 	switch logLevel {
 	case "debug":
-		plumberLog.SetLevel(logrus.DebugLevel)
+		log.SetLevel(logrus.DebugLevel)
 	case "info":
-		plumberLog.SetLevel(logrus.InfoLevel)
+		log.SetLevel(logrus.InfoLevel)
 	case "warn":
-		plumberLog.SetLevel(logrus.WarnLevel)
+		log.SetLevel(logrus.WarnLevel)
 	case "error":
-		plumberLog.SetLevel(logrus.ErrorLevel)
+		log.SetLevel(logrus.ErrorLevel)
 	case "fatal":
-		plumberLog.SetLevel(logrus.FatalLevel)
+		log.SetLevel(logrus.FatalLevel)
 	default:
-		plumberLog.SetLevel(logrus.InfoLevel)
+		log.SetLevel(logrus.InfoLevel)
 	}
-	plumberLog.Debugf("plumberLog init success")
+	log.Debugf("log init success")
 }
 
 type ILog interface {
@@ -51,32 +51,32 @@ type ILog interface {
 }
 
 func Info(args ...interface{}) {
-	plumberLog.Info(args...)
+	log.Info(args...)
 }
 func Infof(format string, args ...interface{}) {
-	plumberLog.Infof(format, args...)
+	log.Infof(format, args...)
 }
 
 func Error(args ...interface{}) {
-	plumberLog.Error(args...)
+	log.Error(args...)
 }
 
 func Errorf(format string, args ...interface{}) {
-	plumberLog.Errorf(format, args...)
+	log.Errorf(format, args...)
 }
 
 func Debugf(format string, args ...interface{}) {
-	plumberLog.Debugf(format, args...)
+	log.Debugf(format, args...)
 }
 
 func Panicf(format string, args ...interface{}) {
-	plumberLog.Panicf(format, args...)
+	log.Panicf(format, args...)
 }
 
 func Fatalf(format string, args ...interface{}) {
-	plumberLog.Fatalf(format, args...)
+	log.Fatalf(format, args...)
 }
 
 func For(ctx context.Context) ILog {
-	return plumberLog
+	return log
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	proxy := proxy.NewSSHProxy("127.0.0.1:7700", "127.0.0.1:22")
+	proxy := proxy.NewSSHProxyClient("127.0.0.1:7700", "127.0.0.1:22")
 	proxy.Start()
 	// exit signal
 	ch := make(chan os.Signal)

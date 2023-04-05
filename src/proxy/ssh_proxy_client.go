@@ -1,25 +1,26 @@
 package proxy
 
 import (
-	"github.com/lpxxn/plumber/src/log"
 	"io"
 	"net"
+
+	"github.com/lpxxn/plumber/src/log"
 )
 
-type SSHProxy struct {
+type SSHProxyClient struct {
 	SrvAddr      string
 	listener     net.Listener
 	LocalSSHAddr string
 }
 
-func NewSSHProxy(srvAddr, localSSHAddr string) *SSHProxy {
-	return &SSHProxy{
+func NewSSHProxyClient(srvAddr, localSSHAddr string) *SSHProxyClient {
+	return &SSHProxyClient{
 		SrvAddr:      srvAddr,
 		LocalSSHAddr: localSSHAddr,
 	}
 }
 
-func (s *SSHProxy) Start() {
+func (s *SSHProxyClient) Start() {
 	var err error
 	s.listener, err = net.Listen("tcp", s.SrvAddr)
 	if err != nil {
@@ -35,7 +36,7 @@ func (s *SSHProxy) Start() {
 	}
 }
 
-func (s *SSHProxy) handleConnection(remoteConn net.Conn) {
+func (s *SSHProxyClient) handleConnection(remoteConn net.Conn) {
 	defer remoteConn.Close()
 
 	localConn, err := net.Dial("tcp", s.LocalSSHAddr)
