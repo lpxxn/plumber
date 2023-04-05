@@ -145,4 +145,31 @@ func TestSrvConf(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, srvConf.TCPAddr)
 	t.Log(srvConf)
+
+}
+
+func TestCliConf(t *testing.T) {
+	filePath, _ := filepath.Abs("./testdata/cli.yaml")
+	t.Log(filePath)
+	body, err := readFile(filePath)
+	assert.Nil(t, err)
+	dec := yaml.NewDecoder(bytes.NewReader(body))
+	tf := func(testFunc func(conf *CliConf)) {
+		cliConf := &CliConf{}
+		err = dec.Decode(cliConf)
+		assert.Nil(t, err)
+		testFunc(cliConf)
+	}
+	tf(func(cliConf *CliConf) {
+		assert.NotEmpty(t, cliConf.SrvTCPAddr)
+		assert.Nil(t, cliConf.SSH)
+		t.Log(cliConf)
+		t.Log(cliConf.SSH)
+	})
+	tf(func(cliConf *CliConf) {
+		assert.NotEmpty(t, cliConf.SrvTCPAddr)
+		assert.NotNil(t, cliConf.SSH)
+		t.Log(cliConf)
+		t.Log(cliConf.SSH)
+	})
 }

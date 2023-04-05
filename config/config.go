@@ -24,5 +24,5 @@ func ReadFile(filename string, v interface{}) error {
 	}
 	err = yaml.Unmarshal(body, v)
 	log.Debugf("config: %v", v)
-	return nil
+	return err
 }
