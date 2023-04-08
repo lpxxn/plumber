@@ -30,6 +30,7 @@ func (s *ServProtocol) IOLoop(c protocol.Client) error {
 		// ie. the returned slice is only valid until the next call to it
 		line, err = client.Reader.ReadSlice('\n')
 		if err != nil {
+			log.Errorf("failed to read command - %s", err)
 			if err == io.EOF {
 				err = nil
 			} else {
@@ -37,6 +38,7 @@ func (s *ServProtocol) IOLoop(c protocol.Client) error {
 			}
 			break
 		}
+		log.Debugf("client(%s) host %s recv: %s", client.Conn.RemoteAddr(), client.Hostname, line)
 		// trim \n
 		line = line[:len(line)-1]
 		// optional: trim \r

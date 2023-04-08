@@ -2,52 +2,27 @@ package log
 
 import (
 	"context"
-	"io"
-	"os"
-
-	"github.com/natefinch/lumberjack"
-	"github.com/sirupsen/logrus"
 )
 
-var log *logrus.Logger
+var log Loger
 
 func init() {
-	log = logrus.New()
-	log.Formatter = &logrus.TextFormatter{ForceColors: true, FullTimestamp: true}
-	log.SetReportCaller(true)
-	jackOut := &lumberjack.Logger{
-		Filename:   "logs/plumber.log",
-		MaxSize:    10, // megabytes
-		MaxBackups: 5,
-		MaxAge:     30, //days
-	}
-	log.SetOutput(io.MultiWriter(jackOut, os.Stdout))
-	logLevel := os.Getenv("LOG_LEVEL")
-	switch logLevel {
-	case "debug":
-		log.SetLevel(logrus.DebugLevel)
-	case "info":
-		log.SetLevel(logrus.InfoLevel)
-	case "warn":
-		log.SetLevel(logrus.WarnLevel)
-	case "error":
-		log.SetLevel(logrus.ErrorLevel)
-	case "fatal":
-		log.SetLevel(logrus.FatalLevel)
-	default:
-		log.SetLevel(logrus.InfoLevel)
-	}
-	log.Debugf("log init success")
+	log = initializeLog()
 }
 
-type ILog interface {
+type Loger interface {
 	Info(args ...interface{})
 	Infof(format string, args ...interface{})
 	Error(args ...interface{})
 	Errorf(format string, args ...interface{})
+	Debug(args ...interface{})
 	Debugf(format string, args ...interface{})
 	Panicf(format string, args ...interface{})
 	Fatalf(format string, args ...interface{})
+	Trace(args ...interface{})
+	Tracef(format string, args ...interface{})
+	Warn(args ...interface{})
+	Warnf(format string, args ...interface{})
 }
 
 func Info(args ...interface{}) {
@@ -65,6 +40,18 @@ func Errorf(format string, args ...interface{}) {
 	log.Errorf(format, args...)
 }
 
+func Warn(args ...interface{}) {
+	log.Warn(args...)
+}
+
+func Warnf(format string, args ...interface{}) {
+	log.Warnf(format, args...)
+}
+
+func Debug(args ...interface{}) {
+	log.Debug(args...)
+}
+
 func Debugf(format string, args ...interface{}) {
 	log.Debugf(format, args...)
 }
@@ -77,6 +64,14 @@ func Fatalf(format string, args ...interface{}) {
 	log.Fatalf(format, args...)
 }
 
-func For(ctx context.Context) ILog {
+func Trace(args ...interface{}) {
+	log.Trace(args...)
+}
+
+func Tracef(format string, args ...interface{}) {
+	log.Tracef(format, args...)
+}
+
+func For(ctx context.Context) Loger {
 	return log
 }

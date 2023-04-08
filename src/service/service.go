@@ -68,10 +68,13 @@ func (s *PlumberSrv) handleConnection(conn net.Conn) {
 		conn.Close()
 		return
 	}
+
+	protocol := NewServProtocol(s)
+
 	client := NewClient(conn)
 	s.subCons.Store(conn.RemoteAddr(), client)
 	// remove conn from subCons if conn is closed
-	go IOLoop(client)
+	go protocol.IOLoop(client)
 	<-client.ExitChan
 	s.subCons.Delete(conn.RemoteAddr())
 	client.Close()
@@ -87,8 +90,4 @@ func (s *PlumberSrv) Close() {
 		value.(*client).Close()
 		return true
 	})
-}
-
-func IOLoop(client *client) error {
-
 }
