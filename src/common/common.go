@@ -34,3 +34,8 @@ func TcpAddr(addrStr string) (*net.TCPAddr, error) {
 	log.Infof("TCP address is valid: %v\n", tcpAddr)
 	return tcpAddr, nil
 }
+
+type Validator interface {
+	// Validate validates the given data.
+	Validate() error
+}

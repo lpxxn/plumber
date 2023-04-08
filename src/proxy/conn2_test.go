@@ -107,6 +107,12 @@ func (tunnel *SSHtunnel) forward(localConn net.Conn) {
 		return
 	}
 
+	// Set keepalive parameters
+	if tcpConn, ok := remoteConn.(*net.TCPConn); ok {
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(5 * time.Minute)
+	}
+
 	copyConn := func(writer, reader net.Conn) {
 		defer writer.Close()
 		defer reader.Close()
@@ -139,12 +145,21 @@ func TestSSH2(t *testing.T) {
 }
 func handleConnection2(conn net.Conn) {
 	defer conn.Close()
-
-	sshConn, err := net.Dial("tcp", "127.0.0.1:22")
+	dialer := net.Dialer{
+		Timeout:   10 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}
+	sshConn, err := dialer.Dial("tcp", "127.0.0.1:22")
 	if err != nil {
 		log.Printf("Error connecting to local SSH port: %v", err)
 		return
 	}
+
+	tcpConn, ok := conn.(*net.TCPConn)
+	if ok {
+		tcpConn.SetKeepAlivePeriod(60 * time.Second)
+	}
+
 	defer sshConn.Close()
 
 	go io.Copy(conn, sshConn)

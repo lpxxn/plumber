@@ -3,6 +3,7 @@ package proxy
 import (
 	"io"
 	"net"
+	"time"
 
 	"github.com/lpxxn/plumber/src/log"
 )
@@ -43,6 +44,13 @@ func (s *SSHProxyTest) handleConnection(remoteConn net.Conn) {
 	if err != nil {
 		return
 	}
+
+	// Set keepalive parameters
+	if tcpConn, ok := localConn.(*net.TCPConn); ok {
+		tcpConn.SetKeepAlive(true)
+		tcpConn.SetKeepAlivePeriod(5 * time.Minute)
+	}
+
 	defer localConn.Close()
 	if err := proxyConn(remoteConn, localConn); err != nil {
 		// check err if connection is closed
@@ -74,3 +82,8 @@ func proxyConn(localConn, remoteConn net.Conn) error {
 	}()
 	return <-errCh
 }
+
+/*
+go install golang.org/x/tools/cmd/stringer@latest
+go install github.com/google/wire/cmd/wire@latest
+*/

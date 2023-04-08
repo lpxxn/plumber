@@ -149,7 +149,7 @@ func TestSrvConf(t *testing.T) {
 }
 
 func TestCliConf(t *testing.T) {
-	filePath, _ := filepath.Abs("./testdata/cli.yaml")
+	filePath, _ := filepath.Abs("./testdata/cli2.yaml")
 	t.Log(filePath)
 	body, err := readFile(filePath)
 	assert.Nil(t, err)

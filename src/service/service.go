@@ -4,26 +4,29 @@ import (
 	"io"
 	"net"
 	"sync"
+	"sync/atomic"
 
 	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
 )
 
-type Service struct {
+type PlumberSrv struct {
 	SrvAddr  string
 	listener net.Listener
 	subCons  sync.Map
 	// tcp listener map[localPort]listener
 	TcpListenerMap map[int]net.Listener
+
+	isExiting int32
 }
 
-func NewService(srvAddr string) *Service {
-	return &Service{
+func NewService(srvAddr string) *PlumberSrv {
+	return &PlumberSrv{
 		SrvAddr: srvAddr,
 	}
 }
 
-func (s *Service) Run() {
+func (s *PlumberSrv) Run() {
 	var err error
 	s.listener, err = net.Listen("tcp", s.SrvAddr)
 	if err != nil {
@@ -40,7 +43,17 @@ func (s *Service) Run() {
 	}
 }
 
-func (s *Service) handleConnection(conn net.Conn) {
+func (s *PlumberSrv) Exit() {
+	if !atomic.CompareAndSwapInt32(&s.isExiting, 0, 1) {
+		return
+	}
+	log.Info("stop to accept connections...")
+	s.listener.Close()
+	s.Close()
+	log.Info("exit")
+}
+
+func (s *PlumberSrv) handleConnection(conn net.Conn) {
 	buf := make([]byte, 4)
 	_, err := io.ReadFull(conn, buf)
 	if err != nil {
@@ -58,31 +71,24 @@ func (s *Service) handleConnection(conn net.Conn) {
 	client := NewClient(conn)
 	s.subCons.Store(conn.RemoteAddr(), client)
 	// remove conn from subCons if conn is closed
-
+	go IOLoop(client)
 	<-client.ExitChan
 	s.subCons.Delete(conn.RemoteAddr())
 	client.Close()
 }
 
 // remove conn from subCons if conn is closed
-func (s *Service) removeConn(conn net.Conn) {
+func (s *PlumberSrv) removeConn(conn net.Conn) {
 	s.subCons.Delete(conn.RemoteAddr().String())
 }
 
-func (s *Service) Close() {
+func (s *PlumberSrv) Close() {
 	s.subCons.Range(func(key, value interface{}) bool {
 		value.(*client).Close()
 		return true
 	})
 }
 
-func IOLop(client *client) error {
+func IOLoop(client *client) error {
 
-	// read data from client
-	for {
-
-	}
-	log.Infof("client(%s) host %s exit", client.Conn.RemoteAddr(), client.Hostname)
-	close(client.ExitChan)
-	return nil
 }

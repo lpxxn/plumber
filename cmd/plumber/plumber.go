@@ -17,11 +17,13 @@ func main() {
 	configFile := flags.Lookup("config").Value.String()
 	srvConf := config.NewSrvConf()
 	if configFile == "" {
-		panic("config file is empty")
+		log.Errorf("config file is empty")
+		return
 	}
 	_, err := os.Stat(configFile)
 	if err != nil {
-		panic(err)
+		log.Error(err)
+		return
 	}
 	if err := config.ReadFile(configFile, srvConf); err != nil {
 		panic(err)
