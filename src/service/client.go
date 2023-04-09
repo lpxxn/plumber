@@ -25,3 +25,7 @@ func NewClient(conn net.Conn) *client {
 		ExitChan: make(chan bool),
 	}
 }
+
+func (c *client) Close() error {
+	return c.Conn.Close()
+}

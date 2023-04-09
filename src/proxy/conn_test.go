@@ -3,6 +3,7 @@ package proxy
 import (
 	"fmt"
 	"net"
+	"os"
 	"testing"
 	"time"
 
@@ -10,6 +11,11 @@ import (
 )
 
 func TestTCPServer(t *testing.T) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		t.Fatalf("failed to get hostname: %v", err)
+	}
+	t.Logf("hostname: %s", hostname)
 	// Listen for incoming connections
 	//ln, err := net.Listen("tcp", "localhost:8080")
 	ln, err := net.Listen("tcp", ":8080")
