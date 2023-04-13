@@ -1,19 +1,20 @@
 package client
 
 import (
-	"bufio"
+	"io"
 	"net"
 	"time"
 
 	"github.com/lpxxn/plumber/config"
+	"github.com/lpxxn/plumber/src/common"
 )
 
 type Conn struct {
 	net.Conn
 
 	// reading/writing interfaces
-	Reader *bufio.Reader
-	Writer *bufio.Writer
+	r io.Reader
+	w io.Writer
 
 	Conf *config.CliConf
 }
@@ -26,6 +27,13 @@ func (c *Conn) Connect() error {
 	if tcpConn, ok := conn.(*net.TCPConn); ok {
 		tcpConn.SetKeepAlive(true)
 		tcpConn.SetKeepAlivePeriod(30 * time.Second)
+	}
+	c.Conn = conn
+	c.r = conn
+	c.w = conn
+	if _, err := c.Write([]byte(common.MagicString)); err != nil {
+		c.Close()
+		return err
 	}
 	return nil
 }
