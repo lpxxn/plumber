@@ -25,7 +25,7 @@ func SendResponse(w io.Writer, d []byte) (int, error) {
 
 // SendCommandResponse is a server side utility function to prefix data with a length header and command header
 // write to the supplied Writer
-func SendCommandResponse(w io.Writer, frameType common.Command, d []byte) (int, error) {
+func SendCommandResponse(w io.Writer, frameType common.CommandType, d []byte) (int, error) {
 	sizeBuf := make([]byte, 4)
 	size := uint32(len(d)) + 4
 	binary.BigEndian.PutUint32(sizeBuf, size)

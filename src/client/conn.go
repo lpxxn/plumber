@@ -42,3 +42,16 @@ func (c *Conn) Close() error {
 	c.Conn.Close()
 	return nil
 }
+
+func (c *Conn) SendCommand()
+
+type flusher interface {
+	Flush() error
+}
+
+func (c *Conn) Flush() error {
+	if w, ok := c.w.(flusher); ok {
+		return w.Flush()
+	}
+	return nil
+}
