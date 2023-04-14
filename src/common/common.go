@@ -12,7 +12,8 @@ const (
 )
 
 var SeparatorBytes = []byte(" ")
-var NewLineBytes = []byte("\r")
+var NewLineByte = byte('\n')
+var NewLineBytes = []byte{NewLineByte}
 
 type WaitGroup struct {
 	sync.WaitGroup

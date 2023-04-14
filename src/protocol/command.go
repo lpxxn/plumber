@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"io"
 
 	"github.com/lpxxn/plumber/src/common"
@@ -39,9 +40,9 @@ func (c *Command) Write(w io.Writer) (int64, error) {
 	}
 
 	if c.Body != nil {
-		bodyLen := make([]byte, 0, 4)
-		binary.BigEndian.PutUint32(bodyLen, uint32(len(c.Body)))
-		n, err := w.Write(bodyLen)
+		bodyLen := [4]byte{}
+		binary.BigEndian.PutUint32(bodyLen[:], uint32(len(c.Body)))
+		n, err := w.Write(bodyLen[:])
 		total += int64(n)
 		if err != nil {
 			return total, err
@@ -53,4 +54,12 @@ func (c *Command) Write(w io.Writer) (int64, error) {
 		}
 	}
 	return total, nil
+}
+
+func IdentifyCmd(i *Identify) (*Command, error) {
+	body, err := json.Marshal(i)
+	if err != nil {
+		return nil, err
+	}
+	return &Command{Type: IdentifyCommand, Body: body}, nil
 }

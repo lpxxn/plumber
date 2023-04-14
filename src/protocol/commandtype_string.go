@@ -9,13 +9,14 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[Nop-0]
-	_ = x[SSHProxyCommand-1]
-	_ = x[HttpProxyCommand-2]
+	_ = x[IdentifyCommand-1]
+	_ = x[SSHProxyCommand-2]
+	_ = x[HttpProxyCommand-3]
 }
 
-const _CommandType_name = "NopSSHProxyCommandHttpProxyCommand"
+const _CommandType_name = "NopIdentifyCommandSSHProxyCommandHttpProxyCommand"
 
-var _CommandType_index = [...]uint8{0, 3, 18, 34}
+var _CommandType_index = [...]uint8{0, 3, 18, 33, 49}
 
 func (i CommandType) String() string {
 	if i < 0 || i >= CommandType(len(_CommandType_index)-1) {
