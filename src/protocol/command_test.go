@@ -49,3 +49,9 @@ func TestCommand(t *testing.T) {
 	assert.Nil(t, err)
 	t.Log(identity)
 }
+
+func TestIP(t *testing.T) {
+	ip, err := common.LocalPrivateIPV4()
+	assert.Nil(t, err)
+	t.Log(ip, ip.String())
+}

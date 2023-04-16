@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"net"
 	"sync"
 
@@ -40,4 +41,19 @@ func TcpAddr(addrStr string) (*net.TCPAddr, error) {
 type Validator interface {
 	// Validate validates the given data.
 	Validate() error
+}
+
+func LocalPrivateIPV4() (net.IP, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return nil, err
+	}
+	for _, addr := range addrs {
+		if ipnet, ok := addr.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP, nil
+			}
+		}
+	}
+	return nil, errors.New("no private ipv4 address found")
 }
