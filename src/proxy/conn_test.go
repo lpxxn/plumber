@@ -45,8 +45,9 @@ func TestTCPServer(t *testing.T) {
 }
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
-
-	fmt.Println("New client connected:", conn.RemoteAddr())
+	clientIP := common.ClientIP(conn)
+	fmt.Println("New client connected:", clientIP)
+	fmt.Println("New client connected:", conn.RemoteAddr(), conn.LocalAddr())
 
 	// Send a welcome message to the client
 	conn.Write([]byte("Welcome to the server!"))

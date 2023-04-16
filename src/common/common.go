@@ -57,3 +57,10 @@ func LocalPrivateIPV4() (net.IP, error) {
 	}
 	return nil, errors.New("no private ipv4 address found")
 }
+
+func ClientIP(conn net.Conn) string {
+	if tcpAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
+		return tcpAddr.String()
+	}
+	return ""
+}
