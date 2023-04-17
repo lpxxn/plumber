@@ -1,6 +1,7 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"time"
@@ -42,14 +43,28 @@ func (s *ServProtocol) IOLoop(c protocol.Client) error {
 		log.Debugf("client(%s) host %s recv: %s", client.Conn.RemoteAddr(), client.Hostname, header)
 		// trim \n
 		header = header[:len(header)-1]
-		cmdType := protocol.CommandType(header[0])
+		params := bytes.Split(header, common.SeparatorBytes)
+		cmdType, err := protocol.BytesToCommand(params[0])
+		if err != nil {
+			log.Errorf("invalid command - %s params: %v", err, params)
+			break
+		}
+		resp, err := s.ExecCommand(client, cmdType, params[1:])
+		if err != nil {
+
+		}
+		log.Debugf("resp: %s", resp)
 	}
 	log.Infof("client(%s) host %s exit", client.Conn.RemoteAddr(), client.Hostname)
 	close(client.ExitChan)
 	return nil
 }
 
-func (s *ServProtocol) ExecCommand(c *client, cmd string) error {
+func (s *ServProtocol) ExecCommand(c *client, cmdType protocol.CommandType, params [][]byte) ([]byte, error) {
+	switch cmdType {
+	case protocol.IdentifyCommand:
 
-	return nil
+	case protocol.SSHProxyCommand:
+	}
+	return nil, nil
 }

@@ -3,9 +3,6 @@ package protocol
 import (
 	"bufio"
 	"bytes"
-	"encoding/binary"
-	"encoding/json"
-	"io"
 	"testing"
 
 	"github.com/lpxxn/plumber/src/common"
@@ -34,18 +31,20 @@ func TestCommand(t *testing.T) {
 	t.Log(param)
 	t.Logf("command: %s", CommandType(param[0][0]))
 
-	bodyLen := [4]byte{}
-	_, err = io.ReadFull(buf, bodyLen[:])
-	assert.Nil(t, err)
-	t.Log(bodyLen)
-	lenVal := binary.BigEndian.Uint32(bodyLen[:])
-	t.Log(lenVal)
-	body := make([]byte, lenVal)
-	_, err = io.ReadFull(buf, body)
-	assert.Nil(t, err)
-	t.Log(body)
-	identity := &Identify{}
-	err = json.Unmarshal(body, identity)
+	//bodyLen := [4]byte{}
+	//_, err = io.ReadFull(buf, bodyLen[:])
+	//assert.Nil(t, err)
+	//t.Log(bodyLen)
+	//lenVal := binary.BigEndian.Uint32(bodyLen[:])
+	//t.Log(lenVal)
+	//body := make([]byte, lenVal)
+	//_, err = io.ReadFull(buf, body)
+	//assert.Nil(t, err)
+	//t.Log(body)
+	//identity := &Identify{}
+	//err = json.Unmarshal(body, identity)
+	//assert.Nil(t, err)
+	identity, err := GetIdentifyCommand(param[1:], buf)
 	assert.Nil(t, err)
 	t.Log(identity)
 }

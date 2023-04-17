@@ -18,7 +18,7 @@ type Command struct {
 
 func (c *Command) Write(w io.Writer) (int64, error) {
 	var total int64
-	n, err := w.Write([]byte{byte(c.Type)})
+	n, err := w.Write(CommandToBytes(c.Type))
 	total += int64(n)
 	if err != nil {
 		return total, err
@@ -58,32 +58,27 @@ func (c *Command) Write(w io.Writer) (int64, error) {
 	return total, nil
 }
 
+func NewCommand(cmdType CommandType, params [][]byte, body []byte) *Command {
+	return &Command{Type: cmdType, Params: params, Body: body}
+}
+
 var ErrInvalidCommand = errors.New("invalid command")
 
-//func GetCmd(client *client) (*Command, error) {
-//	header, err := r.ReadSlice(common.NewLineByte)
-//	if err != nil {
-//		log.Errorf("failed to read command - %s", err)
-//		if err == io.EOF {
-//			err = nil
-//		} else {
-//			err = fmt.Errorf("failed to read command - %s", err)
-//		}
-//		return nil, err
-//	}
-//	log.Debugf("client(%s) host %s recv: %s", , line)
-//	// trim \n
-//	header = header[:len(header)-1]
-//	cmdType := CommandType(header[0])
-//	switch cmdType {
-//	case IdentifyCommand:
-//		return getIdentifyCmd(r)
-//	case SSHProxyCommand:
-//		return getSSHProxyCmd(r)
-//	default:
-//		return nil, ErrInvalidCommand
-//	}
-//}
+func GetIdentifyCommand(params [][]byte, r io.Reader) (*Identify, error) {
+	bodyLen := [4]byte{}
+	_, err := io.ReadFull(r, bodyLen[:])
+	if err != nil {
+		return nil, err
+	}
+	lenVal := binary.BigEndian.Uint32(bodyLen[:])
+	body := make([]byte, lenVal)
+	_, err = io.ReadFull(r, body)
+	if err != nil {
+		return nil, err
+	}
+	identity := &Identify{}
+	return identity, json.Unmarshal(body, identity)
+}
 
 func IdentifyCmd(i *Identify) (*Command, error) {
 	body, err := json.Marshal(i)
