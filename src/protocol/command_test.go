@@ -54,4 +54,7 @@ func TestIP(t *testing.T) {
 	ip, err := common.LocalPrivateIPV4()
 	assert.Nil(t, err)
 	t.Log(ip, ip.String())
+	a := []string{ip.String()}
+	t.Log(a[0])
+	t.Log(a[1:])
 }

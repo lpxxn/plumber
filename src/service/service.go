@@ -54,7 +54,6 @@ func (s *PlumberSrv) Exit() {
 }
 
 func (s *PlumberSrv) handleConnection(conn net.Conn) {
-
 	buf := make([]byte, 4)
 	_, err := io.ReadFull(conn, buf)
 	if err != nil {

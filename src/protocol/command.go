@@ -3,8 +3,10 @@ package protocol
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"io"
 
+	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 )
 
@@ -56,10 +58,45 @@ func (c *Command) Write(w io.Writer) (int64, error) {
 	return total, nil
 }
 
+var ErrInvalidCommand = errors.New("invalid command")
+
+//func GetCmd(client *client) (*Command, error) {
+//	header, err := r.ReadSlice(common.NewLineByte)
+//	if err != nil {
+//		log.Errorf("failed to read command - %s", err)
+//		if err == io.EOF {
+//			err = nil
+//		} else {
+//			err = fmt.Errorf("failed to read command - %s", err)
+//		}
+//		return nil, err
+//	}
+//	log.Debugf("client(%s) host %s recv: %s", , line)
+//	// trim \n
+//	header = header[:len(header)-1]
+//	cmdType := CommandType(header[0])
+//	switch cmdType {
+//	case IdentifyCommand:
+//		return getIdentifyCmd(r)
+//	case SSHProxyCommand:
+//		return getSSHProxyCmd(r)
+//	default:
+//		return nil, ErrInvalidCommand
+//	}
+//}
+
 func IdentifyCmd(i *Identify) (*Command, error) {
 	body, err := json.Marshal(i)
 	if err != nil {
 		return nil, err
 	}
 	return &Command{Type: IdentifyCommand, Body: body}, nil
+}
+
+func SSHProxyCmd(s *config.SSHConf) (*Command, error) {
+	body, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	return &Command{Type: SSHProxyCommand, Body: body}, nil
 }

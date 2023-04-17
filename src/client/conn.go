@@ -43,7 +43,9 @@ func (c *Conn) Close() error {
 	return nil
 }
 
-func (c *Conn) SendCommand()
+func (c *Conn) SendCommand() {
+
+}
 
 type flusher interface {
 	Flush() error
