@@ -39,3 +39,7 @@ func (s *SSHConf) Validate() error {
 	_, err := common.TcpAddr(s.LocalSSHAddr)
 	return err
 }
+
+func NewCliConf() *CliConf {
+	return &CliConf{}
+}

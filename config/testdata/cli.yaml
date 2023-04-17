@@ -1,4 +1,4 @@
-srvTcpAddr: 127.0.0.2:9870
+srvTcpAddr: 127.0.0.1:9870
 ssh:
   srvPort: 7222
   localSSHAddr: 127.0.0.1:7655

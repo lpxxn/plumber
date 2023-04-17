@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"net"
+	"os"
 	"sync"
 
 	"github.com/lpxxn/plumber/src/log"
@@ -12,6 +13,7 @@ const (
 	MagicString = "GoV1"
 )
 
+var MagicBytes = []byte(MagicString)
 var SeparatorBytes = []byte(" ")
 var NewLineByte = byte('\n')
 var NewLineBytes = []byte{NewLineByte}
@@ -63,4 +65,13 @@ func ClientIP(conn net.Conn) string {
 		return tcpAddr.String()
 	}
 	return ""
+}
+
+func GetHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Errorf("get hostname error: %v", err)
+		return ""
+	}
+	return hostname
 }

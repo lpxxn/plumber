@@ -3,6 +3,8 @@ package service
 import (
 	"bufio"
 	"net"
+
+	"github.com/lpxxn/plumber/src/protocol"
 )
 
 const defaultBufferSize = 16 * 1024
@@ -13,8 +15,9 @@ type client struct {
 
 	ExitChan chan bool
 	// reading/writing interfaces
-	Reader *bufio.Reader
-	Writer *bufio.Writer
+	Reader   *bufio.Reader
+	Writer   *bufio.Writer
+	Identity *protocol.Identify
 }
 
 func NewClient(conn net.Conn) *client {

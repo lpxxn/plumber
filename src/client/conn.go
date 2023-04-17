@@ -3,14 +3,13 @@ package client
 import (
 	"io"
 	"net"
-	"time"
 
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 )
 
 type Conn struct {
-	net.Conn
+	*net.TCPConn
 
 	// reading/writing interfaces
 	r io.Reader
@@ -19,27 +18,20 @@ type Conn struct {
 	Conf *config.CliConf
 }
 
-func (c *Conn) Connect() error {
-	conn, err := net.Dial("tcp", c.Conf.SrvTCPAddr)
-	if err != nil {
-		return err
-	}
-	if tcpConn, ok := conn.(*net.TCPConn); ok {
-		tcpConn.SetKeepAlive(true)
-		tcpConn.SetKeepAlivePeriod(30 * time.Second)
-	}
-	c.Conn = conn
+func NewConnect(conn *net.TCPConn) (*Conn, error) {
+	c := &Conn{}
+	c.TCPConn = conn
 	c.r = conn
 	c.w = conn
 	if _, err := c.Write([]byte(common.MagicString)); err != nil {
 		c.Close()
-		return err
+		return nil, err
 	}
-	return nil
+	return c, nil
 }
 
 func (c *Conn) Close() error {
-	c.Conn.Close()
+	c.TCPConn.Close()
 	return nil
 }
 

@@ -63,7 +63,11 @@ func (s *ServProtocol) IOLoop(c protocol.Client) error {
 func (s *ServProtocol) ExecCommand(c *client, cmdType protocol.CommandType, params [][]byte) ([]byte, error) {
 	switch cmdType {
 	case protocol.IdentifyCommand:
-
+		identity, err := protocol.GetIdentifyCommand(params, c.Reader)
+		if err != nil {
+			return nil, err
+		}
+		c.Identity = identity
 	case protocol.SSHProxyCommand:
 	}
 	return nil, nil
