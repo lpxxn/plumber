@@ -32,7 +32,7 @@ func main() {
 		panic(err)
 	}
 	log.Debugf("config: %+v", *srvConf)
-	srv := service.NewService(srvConf.TCPAddr)
+	srv := service.NewService(srvConf)
 	wg := &common.WaitGroup{}
 	wg.WaitFunc(func() {
 		srv.Run()

@@ -62,7 +62,7 @@ func LocalPrivateIPV4() (net.IP, error) {
 
 func ClientIP(conn net.Conn) string {
 	if tcpAddr, ok := conn.RemoteAddr().(*net.TCPAddr); ok {
-		return tcpAddr.String()
+		return tcpAddr.IP.String()
 	}
 	return ""
 }

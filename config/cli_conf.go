@@ -7,13 +7,19 @@ import (
 )
 
 type CliConf struct {
-	SrvTCPAddr string   `yaml:"srvTcpAddr"`
-	SSH        *SSHConf `yaml:"ssh"`
+	SrvTCPAddr string         `yaml:"srvTcpAddr"`
+	SSH        *SSHConf       `yaml:"ssh"`
+	HttpProxy  *HttpProxyConf `yaml:"httpProxy"`
 }
 
 type SSHConf struct {
-	SrvPort      int    `yaml:"srvPort"`
-	LocalSSHAddr string `yaml:"localSSHAddr"`
+	SrvPort      int      `yaml:"srvPort"`
+	LocalSSHAddr string   `yaml:"localSSHAddr"`
+	WhiteList    []string `yaml:"whiteList"`
+}
+
+type HttpProxyConf struct {
+	SrvPort int `yaml:"srvPort"`
 }
 
 func (c *CliConf) Validate() error {

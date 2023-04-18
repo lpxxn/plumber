@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
 )
@@ -18,11 +19,13 @@ type PlumberSrv struct {
 	TcpListenerMap map[int]net.Listener
 
 	isExiting int32
+	Conf      *config.SrvConf
 }
 
-func NewService(srvAddr string) *PlumberSrv {
+func NewService(conf *config.SrvConf) *PlumberSrv {
 	return &PlumberSrv{
-		SrvAddr: srvAddr,
+		SrvAddr: conf.TCPAddr,
+		Conf:    conf,
 	}
 }
 
@@ -90,4 +93,9 @@ func (s *PlumberSrv) Close() {
 		value.(*client).Close()
 		return true
 	})
+}
+
+// Verify whether the IP is in the whitelist
+func (s *PlumberSrv) VerifyIP(conn net.Conn) bool {
+	return true
 }
