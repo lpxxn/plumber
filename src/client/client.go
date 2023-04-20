@@ -103,3 +103,17 @@ func (c *Client) sendIdentify() error {
 	}
 	return nil
 }
+
+func (c *Client) sendSSHCmd() error {
+	if c.Conf.SSH == nil {
+		return nil
+	}
+	cmd, err := protocol.SSHProxyCmd(c.Conf.SSH)
+	if err != nil {
+		return err
+	}
+	if _, err := cmd.Write(c.Conn.w); err != nil {
+		return err
+	}
+	return c.Conn.Flush()
+}
