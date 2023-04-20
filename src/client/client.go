@@ -110,10 +110,15 @@ func (c *Client) sendSSHCmd() error {
 	}
 	cmd, err := protocol.SSHProxyCmd(c.Conf.SSH)
 	if err != nil {
+		log.Errorf("create ssh proxy cmd failed: %s", err.Error())
 		return err
 	}
 	if _, err := cmd.Write(c.Conn.w); err != nil {
+		log.Errorf("send ssh proxy cmd failed: %s", err.Error())
 		return err
 	}
-	return c.Conn.Flush()
+	if err := c.Conn.Flush(); err != nil {
+		return err
+	}
+
 }

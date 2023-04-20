@@ -64,7 +64,18 @@ func NewCommand(cmdType CommandType, params [][]byte, body []byte) *Command {
 
 var ErrInvalidCommand = errors.New("invalid command")
 
-func GetIdentifyCommand(params [][]byte, r io.Reader) (*Identify, error) {
+func ReadIdentifyCommand(params [][]byte, r io.Reader) (*Identify, error) {
+	body, err := ReadCommandData(r)
+	if err != nil {
+		return nil, err
+	}
+	identity := &Identify{}
+	return identity, json.Unmarshal(body, identity)
+}
+
+// ReadCommandData reads a single command from the provided io.Reader
+// eg: | 4 byte length | body |
+func ReadCommandData(r io.Reader) ([]byte, error) {
 	bodyLen := [4]byte{}
 	_, err := io.ReadFull(r, bodyLen[:])
 	if err != nil {
@@ -76,8 +87,7 @@ func GetIdentifyCommand(params [][]byte, r io.Reader) (*Identify, error) {
 	if err != nil {
 		return nil, err
 	}
-	identity := &Identify{}
-	return identity, json.Unmarshal(body, identity)
+	return body, nil
 }
 
 func IdentifyCmd(i *Identify) (*Command, error) {

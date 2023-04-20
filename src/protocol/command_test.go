@@ -44,7 +44,7 @@ func TestCommand(t *testing.T) {
 	//identity := &Identify{}
 	//err = json.Unmarshal(body, identity)
 	//assert.Nil(t, err)
-	identity, err := GetIdentifyCommand(param[1:], buf)
+	identity, err := ReadIdentifyCommand(param[1:], buf)
 	assert.Nil(t, err)
 	t.Log(identity)
 }
