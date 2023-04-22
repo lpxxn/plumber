@@ -73,6 +73,15 @@ func ReadIdentifyCommand(params [][]byte, r io.Reader) (*Identify, error) {
 	return identity, json.Unmarshal(body, identity)
 }
 
+func ReadSSHProxyCommand(params [][]byte, r io.Reader) (*config.SSHConf, error) {
+	body, err := ReadCommandData(r)
+	if err != nil {
+		return nil, err
+	}
+	sshConf := &config.SSHConf{}
+	return sshConf, json.Unmarshal(body, sshConf)
+}
+
 // ReadCommandData reads a single command from the provided io.Reader
 // eg: | 4 byte length | body |
 func ReadCommandData(r io.Reader) ([]byte, error) {

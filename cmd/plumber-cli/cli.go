@@ -34,6 +34,7 @@ func main() {
 	if err := cli.ConnectToSrv(); err != nil {
 		panic(err)
 	}
+	go cli.Handle
 	// exit signal
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt)

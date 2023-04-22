@@ -29,7 +29,7 @@ func (s *ServProtocol) IOLoop(c protocol.Client) error {
 	for {
 		client.Conn.SetReadDeadline(zeroTime)
 		// ReadSlice does not allocate new space for the data each request
-		// ie. the returned slice is only valid until the next call to it
+		// the returned slice is only valid until the next call to it
 		header, err = client.Reader.ReadSlice(common.NewLineByte)
 		if err != nil {
 			log.Errorf("failed to read command - %s", err)
@@ -69,6 +69,12 @@ func (s *ServProtocol) ExecCommand(c *client, cmdType protocol.CommandType, para
 		}
 		c.Identity = identity
 	case protocol.SSHProxyCommand:
+		sshConfig, err := protocol.ReadSSHProxyCommand(params, c.Reader)
+		if err != nil {
+			return nil, err
+		}
+		log.Debugf("ExecCommand received SSHConfig: %+v", sshConfig)
+
 	}
 	return nil, nil
 }

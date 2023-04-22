@@ -1,6 +1,7 @@
 package client
 
 import (
+	"bufio"
 	"net"
 	"time"
 
@@ -55,6 +56,8 @@ func (c *Client) ConnectToSrv() error {
 		log.Errorf("send identify to server failed: %s", err.Error())
 		return err
 	}
+	c.Conn.r = bufio.NewReader(c.Conn.r)
+	c.Conn.w = bufio.NewWriter(c.Conn.w)
 	return nil
 }
 
@@ -104,7 +107,7 @@ func (c *Client) sendIdentify() error {
 	return nil
 }
 
-func (c *Client) sendSSHCmd() error {
+func (c *Client) SendSSHConfigCmd() error {
 	if c.Conf.SSH == nil {
 		return nil
 	}
@@ -120,5 +123,5 @@ func (c *Client) sendSSHCmd() error {
 	if err := c.Conn.Flush(); err != nil {
 		return err
 	}
-
+	return nil
 }
