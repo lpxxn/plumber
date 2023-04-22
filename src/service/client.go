@@ -3,6 +3,7 @@ package service
 import (
 	"bufio"
 	"net"
+	"sync"
 
 	"github.com/lpxxn/plumber/src/protocol"
 )
@@ -15,9 +16,10 @@ type client struct {
 
 	ExitChan chan bool
 	// reading/writing interfaces
-	Reader   *bufio.Reader
-	Writer   *bufio.Writer
-	Identity *protocol.Identify
+	Reader    *bufio.Reader
+	Writer    *bufio.Writer
+	Identity  *protocol.Identify
+	writeLock sync.RWMutex
 }
 
 func NewClient(conn net.Conn) *client {

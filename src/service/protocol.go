@@ -68,13 +68,14 @@ func (s *ServProtocol) ExecCommand(c *client, cmdType protocol.CommandType, para
 			return nil, err
 		}
 		c.Identity = identity
+		log.Debugf("ExecCommand received identity: %+v", identity)
 	case protocol.SSHProxyCommand:
 		sshConfig, err := protocol.ReadSSHProxyCommand(params, c.Reader)
 		if err != nil {
 			return nil, err
 		}
 		log.Debugf("ExecCommand received SSHConfig: %+v", sshConfig)
-
 	}
+
 	return nil, nil
 }
