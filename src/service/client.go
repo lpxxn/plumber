@@ -34,3 +34,13 @@ func NewClient(conn net.Conn) *client {
 func (c *client) Close() error {
 	return c.Conn.Close()
 }
+
+func (c *client) SendCommand(b []byte) error {
+	c.writeLock.Lock()
+	defer c.writeLock.Unlock()
+	_, err := c.Writer.Write(b)
+	if err != nil {
+		return err
+	}
+	return c.Writer.Flush()
+}
