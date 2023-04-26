@@ -2,10 +2,12 @@ package service
 
 import (
 	"bufio"
+	"fmt"
 	"net"
 	"sync"
 
 	"github.com/lpxxn/plumber/config"
+	"github.com/lpxxn/plumber/src/log"
 	"github.com/lpxxn/plumber/src/protocol"
 )
 
@@ -38,8 +40,17 @@ func (s *sshProxy) Close() error {
 	return nil
 }
 
-func (s *sshProxy) NewTCPServer() (net.Listener, error) {
+func (s *sshProxy) NewTCPServer() error {
+	listner, err := net.Listen("tcp", fmt.Sprintf(":%d", s.SSHConfig.SrvPort))
+	if err != nil {
+		log.Errorf("sshProxy listen on %d failed: %v", s.SSHConfig.SrvPort, err)
+		return err
+	}
+	return TCPServer(listner, s)
+}
 
+func (s *sshProxy) Handle(con net.Conn) {
+	log.Infof("sshProxy: new connection from %s", con.RemoteAddr())
 }
 
 func NewClient(conn net.Conn) *client {
