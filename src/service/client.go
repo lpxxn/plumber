@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/log"
@@ -17,13 +18,15 @@ type client struct {
 	net.Conn
 	Hostname string
 
-	ExitChan chan bool
 	// reading/writing interfaces
 	Reader    *bufio.Reader
 	Writer    *bufio.Writer
 	Identity  *protocol.Identify
 	writeLock sync.RWMutex
 	sshProxy  *sshProxy
+
+	exitChan chan bool
+	isClosed int32
 }
 
 type sshProxy struct {
@@ -40,17 +43,18 @@ func (s *sshProxy) Close() error {
 	return nil
 }
 
-func (s *sshProxy) NewTCPServer() error {
+func (s *sshProxy) NewTCPServer(handler TCPHandler) error {
 	listner, err := net.Listen("tcp", fmt.Sprintf(":%d", s.SSHConfig.SrvPort))
 	if err != nil {
 		log.Errorf("sshProxy listen on %d failed: %v", s.SSHConfig.SrvPort, err)
 		return err
 	}
-	return TCPServer(listner, s)
+	return TCPServer(listner, handler)
 }
 
 func (s *sshProxy) Handle(con net.Conn) {
 	log.Infof("sshProxy: new connection from %s", con.RemoteAddr())
+
 }
 
 func NewClient(conn net.Conn) *client {
@@ -58,12 +62,16 @@ func NewClient(conn net.Conn) *client {
 		Conn:     conn,
 		Reader:   bufio.NewReaderSize(conn, defaultBufferSize),
 		Writer:   bufio.NewWriterSize(conn, defaultBufferSize),
-		ExitChan: make(chan bool),
+		exitChan: make(chan bool),
 		sshProxy: &sshProxy{},
 	}
 }
 
 func (c *client) Close() error {
+	if !atomic.CompareAndSwapInt32(&c.isClosed, 0, 1) {
+		log.Errorf("client %s is already closed", c.RemoteAddr())
+		return nil
+	}
 	if c.sshProxy != nil {
 		c.sshProxy.Close()
 	}

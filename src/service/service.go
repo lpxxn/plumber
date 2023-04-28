@@ -78,7 +78,7 @@ func (s *PlumberSrv) handleConnection(conn net.Conn) {
 	s.subCons.Store(conn.RemoteAddr(), client)
 	// remove conn from subCons if conn is closed
 	go protocol.IOLoop(client)
-	<-client.ExitChan
+	<-client.exitChan
 	s.subCons.Delete(conn.RemoteAddr())
 	client.Close()
 }

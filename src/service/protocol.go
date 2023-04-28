@@ -56,7 +56,7 @@ func (s *ServProtocol) IOLoop(c protocol.Client) error {
 		log.Debugf("resp: %s", resp)
 	}
 	log.Infof("client(%s) host %s exit", client.Conn.RemoteAddr(), client.Hostname)
-	close(client.ExitChan)
+	close(client.exitChan)
 	return nil
 }
 
