@@ -2,14 +2,13 @@ package service
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
 
-	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/log"
 	"github.com/lpxxn/plumber/src/protocol"
+	"github.com/lpxxn/plumber/src/proxy"
 )
 
 const defaultBufferSize = 16 * 1024
@@ -23,38 +22,10 @@ type client struct {
 	Writer    *bufio.Writer
 	Identity  *protocol.Identify
 	writeLock sync.RWMutex
-	sshProxy  *sshProxy
+	sshProxy  *proxy.SSHProxy
 
 	exitChan chan bool
 	isClosed int32
-}
-
-type sshProxy struct {
-	// if the client is ssh proxy client, this field will be set
-	LocalListener net.Listener
-	SSHConfig     *config.SSHConf
-}
-
-func (s *sshProxy) Close() error {
-	if s.LocalListener != nil {
-		s.LocalListener.Close()
-		s.LocalListener = nil
-	}
-	return nil
-}
-
-func (s *sshProxy) NewTCPServer(handler TCPHandler) error {
-	listner, err := net.Listen("tcp", fmt.Sprintf(":%d", s.SSHConfig.SrvPort))
-	if err != nil {
-		log.Errorf("sshProxy listen on %d failed: %v", s.SSHConfig.SrvPort, err)
-		return err
-	}
-	return TCPServer(listner, handler)
-}
-
-func (s *sshProxy) Handle(con net.Conn) {
-	log.Infof("sshProxy: new connection from %s", con.RemoteAddr())
-
 }
 
 func NewClient(conn net.Conn) *client {
@@ -63,7 +34,7 @@ func NewClient(conn net.Conn) *client {
 		Reader:   bufio.NewReaderSize(conn, defaultBufferSize),
 		Writer:   bufio.NewWriterSize(conn, defaultBufferSize),
 		exitChan: make(chan bool),
-		sshProxy: &sshProxy{},
+		sshProxy: &proxy.SSHProxy{},
 	}
 }
 
