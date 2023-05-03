@@ -8,6 +8,7 @@ import (
 
 type CliConf struct {
 	SrvTCPAddr string         `yaml:"srvTcpAddr"`
+	SrvIP      string         `yaml:"-"`
 	SSH        *SSHConf       `yaml:"ssh"`
 	HttpProxy  *HttpProxyConf `yaml:"httpProxy"`
 }
@@ -26,9 +27,11 @@ func (c *CliConf) Validate() error {
 	if c.SrvTCPAddr == "" {
 		return errors.New("srvTcpAddr is empty")
 	}
-	if _, err := common.TcpAddr(c.SrvTCPAddr); err != nil {
+	srvIP, err := common.TcpAddr(c.SrvTCPAddr)
+	if err != nil {
 		return err
 	}
+	c.SrvIP = srvIP.IP.String()
 	if c.SSH != nil {
 		return c.SSH.Validate()
 	}

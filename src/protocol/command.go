@@ -99,6 +99,15 @@ func ReadCommandData(r io.Reader) ([]byte, error) {
 	return body, nil
 }
 
+func ReadCommonResultData(r io.Reader) (*CommonResult, error) {
+	body, err := ReadCommandData(r)
+	if err != nil {
+		return nil, err
+	}
+	result := &CommonResult{}
+	return result, json.Unmarshal(body, result)
+}
+
 func IdentifyCmd(i *Identify) (*Command, error) {
 	body, err := json.Marshal(i)
 	if err != nil {

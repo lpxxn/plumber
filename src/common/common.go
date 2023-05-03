@@ -2,6 +2,7 @@ package common
 
 import (
 	"errors"
+	"io"
 	"net"
 	"os"
 	"sync"
@@ -74,4 +75,13 @@ func GetHostname() string {
 		return ""
 	}
 	return hostname
+}
+
+func CopyDate(dst io.Writer, src io.Reader) error {
+	_, err := io.Copy(dst, src)
+	if err != nil {
+		log.Errorf("copy data failed: %v", err)
+		return err
+	}
+	return nil
 }

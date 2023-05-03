@@ -2,12 +2,12 @@ package service
 
 import (
 	"bufio"
-	"io"
 	"net"
 	"sync"
 	"sync/atomic"
 
 	"github.com/lpxxn/plumber/config"
+	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
 	"github.com/lpxxn/plumber/src/protocol"
 	"github.com/lpxxn/plumber/src/proxy"
@@ -65,22 +65,15 @@ func (c *client) StartSSHProxy(config *config.SSHConf) error {
 	c.sshProxy = &proxy.SSHProxy{
 		SSHConfig: config,
 	}
-	copyDate := func(dst io.Writer, src io.Reader) error {
-		_, err := io.Copy(dst, src)
-		if err != nil {
-			log.Errorf("copy data failed: %v", err)
-			return err
-		}
-		return nil
-	}
+
 	var err error
 	if err := c.sshProxy.NewTCPServer(func(conn net.Conn) {
 		eg := errgroup.Group{}
 		eg.Go(func() error {
-			return copyDate(conn, c.Conn)
+			return common.CopyDate(conn, c.Conn)
 		})
 		eg.Go(func() error {
-			return copyDate(c.Conn, conn)
+			return common.CopyDate(c.Conn, conn)
 		})
 		err = eg.Wait()
 	}); err != nil {
