@@ -85,3 +85,20 @@ func CopyDate(dst io.Writer, src io.Reader) error {
 	}
 	return nil
 }
+
+func VerifyConnection(conn net.Conn) error {
+	log.Infof("verify connection")
+	buf := make([]byte, 4)
+	_, err := io.ReadFull(conn, buf)
+	if err != nil {
+		log.Errorf("read magic error: %v", err)
+		return err
+	}
+	magicStr := string(buf)
+	log.Infof("magicStr: %s", magicStr)
+	if magicStr != MagicString {
+		log.Errorf("magic string not match: %s", magicStr)
+		return errors.New("magic string not match")
+	}
+	return nil
+}

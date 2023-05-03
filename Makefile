@@ -2,7 +2,7 @@
 cli:
 	go build -o bin/plumber-cli ./cmd/plumber-cli
 
-.PHONY: linux_cli
+.PHONY: linux_arm_cli
 linux_arm_cli:
 	env GOOS=linux GOARCH=arm64 go build -o bin/plumber-cli ./cmd/plumber-cli
 
@@ -14,7 +14,7 @@ linux_amd_cli:
 srv:
 	go build -o bin/plumber ./cmd/plumber
 
-.PHONY: linux_srv
+.PHONY: linux_arm_srv
 linux_arm_srv:
 	env GOOS=linux GOARCH=arm64 go build -o bin/plumber ./cmd/plumber
 

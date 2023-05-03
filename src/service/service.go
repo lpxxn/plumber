@@ -1,7 +1,6 @@
 package service
 
 import (
-	"io"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -37,6 +36,7 @@ func (s *PlumberSrv) Run() {
 	}
 	log.Infof("listen on %s", s.SrvAddr)
 	log.Infof("start to accept connections")
+	log.Debug(common.LocalPrivateIPV4())
 	for {
 		conn, err := s.listener.Accept()
 		if err != nil {
@@ -57,17 +57,7 @@ func (s *PlumberSrv) Exit() {
 }
 
 func (s *PlumberSrv) handleConnection(conn net.Conn) {
-	buf := make([]byte, 4)
-	_, err := io.ReadFull(conn, buf)
-	if err != nil {
-		log.Errorf("read magic error: %v", err)
-		conn.Close()
-		return
-	}
-	magicStr := string(buf)
-	log.Infof("magicStr: %s", magicStr)
-	if magicStr != common.MagicString {
-		log.Errorf("magic string not match: %s", magicStr)
+	if err := common.VerifyConnection(conn); err != nil {
 		conn.Close()
 		return
 	}

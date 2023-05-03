@@ -127,11 +127,12 @@ func (c *Client) HandleSSHProxy() error {
 	if err := c.Conn.Flush(); err != nil {
 		return err
 	}
-	result, err := protocol.ReadCommonResultData(c.Conn.r)
+	result, err := protocol.ReadFrameData(c.Conn.r)
 	if err != nil {
 		log.Errorf("read ssh proxy result failed: %s", err.Error())
 		return err
 	}
+	log.Debugf("ssh proxy result: %s code: %d", result.Msg, result.Code)
 	if result.Code != protocol.Success {
 		log.Errorf("ssh proxy failed: %s", result.Msg)
 		return err
@@ -154,6 +155,7 @@ func (c *Client) HandleSSHProxy() error {
 	eg.Go(func() error {
 		return common.CopyDate(localSSHFwdConn, sshProxyConn)
 	})
+	log.Infof("wait for ssh proxy exit")
 	err = eg.Wait()
 	return err
 }
@@ -162,6 +164,11 @@ func (c *Client) ConnSSHProxy() (net.Conn, error) {
 	sshProxyConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", c.Conf.SrvIP, c.Conf.SSH.SrvPort))
 	if err != nil {
 		log.Errorf("connect to ssh proxy server failed: %s", err.Error())
+		return nil, err
+	}
+	if _, err := sshProxyConn.Write([]byte(common.MagicString)); err != nil {
+		log.Errorf("write magic string to ssh proxy server failed: %s", err.Error())
+		c.Close()
 		return nil, err
 	}
 	return sshProxyConn, nil

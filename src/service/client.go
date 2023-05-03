@@ -66,25 +66,32 @@ func (c *client) StartSSHProxy(config *config.SSHConf) error {
 		SSHConfig: config,
 	}
 
-	var err error
-	if err := c.sshProxy.NewTCPServer(func(conn net.Conn) {
-		eg := errgroup.Group{}
-		eg.Go(func() error {
-			return common.CopyDate(conn, c.Conn)
-		})
-		eg.Go(func() error {
-			return common.CopyDate(c.Conn, conn)
-		})
-		err = eg.Wait()
-	}); err != nil {
+	if err := c.sshProxy.NewTCPServer(); err != nil {
 		return err
 	}
-	readyCommand := protocol.Command{
-		Type: protocol.ReadyCommand,
-	}
-	if _, err := readyCommand.Write(c.Conn); err != nil {
+	if _, err := protocol.SendFrameData(c.Conn, &protocol.FrameResp{
+		Code: protocol.Success,
+		Msg:  "success",
+	}); err != nil {
 		log.Errorf("write ready command failed: %v", err)
 		return err
 	}
-	return err
+	if err := c.sshProxy.WaitForTunnelConn(); err != nil {
+		return err
+	}
+	log.Infof("client %s start ssh proxy success", c.RemoteAddr())
+	return c.sshProxy.Start(func(conn net.Conn) {
+		log.Infof("new tcp connection from ssh proxy: %s", conn.RemoteAddr())
+		eg := errgroup.Group{}
+		eg.Go(func() error {
+			return common.CopyDate(conn, c.sshProxy.RemoteTunnelConn)
+		})
+		eg.Go(func() error {
+			return common.CopyDate(c.sshProxy.RemoteTunnelConn, conn)
+		})
+		err := eg.Wait()
+		if err != nil {
+			log.Errorf("copy data failed: %v", err)
+		}
+	})
 }

@@ -76,6 +76,7 @@ func (s *ServProtocol) ExecCommand(c *client, cmdType protocol.CommandType, para
 		}
 		log.Debugf("ExecCommand received SSHConfig: %+v", sshConfig)
 		if err := c.StartSSHProxy(sshConfig); err != nil {
+			c.sshProxy.Close()
 			return nil, err
 		}
 	}

@@ -34,7 +34,9 @@ func main() {
 	if err := cli.ConnectToSrv(); err != nil {
 		panic(err)
 	}
-	cli.HandleSSHProxy()
+	if err := cli.HandleSSHProxy(); err != nil {
+		panic(err)
+	}
 	// exit signal
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt)
