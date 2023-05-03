@@ -10,9 +10,7 @@ import (
 	"github.com/lpxxn/plumber/src/log"
 )
 
-type TCPHandler interface {
-	Handle(net.Conn)
-}
+type TCPHandler func(net.Conn)
 
 func TCPServer(listener net.Listener, handler TCPHandler) error {
 	log.Infof("TCPServer: listening on %s", listener.Addr())
@@ -38,7 +36,7 @@ func TCPServer(listener net.Listener, handler TCPHandler) error {
 
 		wg.Add(1)
 		go func() {
-			handler.Handle(clientConn)
+			handler(clientConn)
 			wg.Done()
 		}()
 	}

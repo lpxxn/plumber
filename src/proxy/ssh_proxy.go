@@ -22,16 +22,11 @@ func (s *SSHProxy) Close() error {
 	return nil
 }
 
-func (s *SSHProxy) NewTCPServer() error {
+func (s *SSHProxy) NewTCPServer(handler TCPHandler) error {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", s.SSHConfig.SrvPort))
 	if err != nil {
 		log.Errorf("SSHProxy listen on %d failed: %v", s.SSHConfig.SrvPort, err)
 		return err
 	}
-	return TCPServer(listener, s)
-}
-
-func (s *SSHProxy) Handle(con net.Conn) {
-	log.Infof("SSHProxy: new connection from %s", con.RemoteAddr())
-
+	return TCPServer(listener, handler)
 }
