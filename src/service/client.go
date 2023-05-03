@@ -61,15 +61,10 @@ func (c *client) SendCommand(b []byte) error {
 	return c.Writer.Flush()
 }
 
-func (c *client) InitSSHProxy(config *config.SSHConf) error {
+func (c *client) StartSSHProxy(config *config.SSHConf) error {
 	c.sshProxy = &proxy.SSHProxy{
 		SSHConfig: config,
 	}
-	c.sshProxy.NewTCPServer(c.HandleSSHProxy)
-	return nil
-}
-
-func (c *client) HandleSSHProxy(conn net.Conn) {
 	copyDate := func(dst io.Writer, src io.Reader) error {
 		_, err := io.Copy(dst, src)
 		if err != nil {
@@ -78,12 +73,25 @@ func (c *client) HandleSSHProxy(conn net.Conn) {
 		}
 		return nil
 	}
-	eg := errgroup.Group{}
-	eg.Go(func() error {
-		return copyDate(conn, c.Conn)
-	})
-	eg.Go(func() error {
-		return copyDate(c.Conn, conn)
-	})
-	eg.Wait()
+	var err error
+	if err := c.sshProxy.NewTCPServer(func(conn net.Conn) {
+		eg := errgroup.Group{}
+		eg.Go(func() error {
+			return copyDate(conn, c.Conn)
+		})
+		eg.Go(func() error {
+			return copyDate(c.Conn, conn)
+		})
+		err = eg.Wait()
+	}); err != nil {
+		return err
+	}
+	readyCommand := protocol.Command{
+		Type: protocol.ReadyCommand,
+	}
+	if _, err := readyCommand.Write(c.Conn); err != nil {
+		log.Errorf("write ready command failed: %v", err)
+		return err
+	}
+	return err
 }
