@@ -11,10 +11,13 @@ import (
 )
 
 const (
-	MagicString = "GoV1"
+	MagicString    = "GoV1"
+	SSHMagicString = "SSHV1"
 )
 
 var MagicBytes = []byte(MagicString)
+var SSHMagicBytes = []byte(SSHMagicString)
+
 var SeparatorBytes = []byte(" ")
 var NewLineByte = byte('\n')
 var NewLineBytes = []byte{NewLineByte}
@@ -86,9 +89,9 @@ func CopyDate(dst io.Writer, src io.Reader) error {
 	return nil
 }
 
-func VerifyConnection(conn net.Conn) error {
+func VerifyMagicStrConnection(conn net.Conn) error {
 	log.Infof("verify connection")
-	buf := make([]byte, 4)
+	buf := make([]byte, len(MagicBytes))
 	_, err := io.ReadFull(conn, buf)
 	if err != nil {
 		log.Errorf("read magic error: %v", err)
@@ -99,6 +102,23 @@ func VerifyConnection(conn net.Conn) error {
 	if magicStr != MagicString {
 		log.Errorf("magic string not match: %s", magicStr)
 		return errors.New("magic string not match")
+	}
+	return nil
+}
+
+func VerifySSHMagicStrConnection(conn net.Conn) error {
+	log.Infof("verify ssh connection")
+	buf := make([]byte, len(SSHMagicString))
+	_, err := io.ReadFull(conn, buf)
+	if err != nil {
+		log.Errorf("read magic error: %v", err)
+		return err
+	}
+	magicStr := string(buf)
+	log.Infof("ssh magicStr: %s", magicStr)
+	if magicStr != SSHMagicString {
+		log.Errorf("ssh magic string not match: %s", magicStr)
+		return errors.New("ssh magic string not match")
 	}
 	return nil
 }

@@ -57,7 +57,7 @@ func (s *PlumberSrv) Exit() {
 }
 
 func (s *PlumberSrv) handleConnection(conn net.Conn) {
-	if err := common.VerifyConnection(conn); err != nil {
+	if err := common.VerifyMagicStrConnection(conn); err != nil {
 		conn.Close()
 		return
 	}

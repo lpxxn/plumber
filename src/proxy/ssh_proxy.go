@@ -41,7 +41,7 @@ func (s *SSHProxy) WaitForTunnelConn() error {
 		log.Errorf("SSHProxy accept failed: %v", err)
 		return err
 	}
-	if err := common.VerifyConnection(conn); err != nil {
+	if err := common.VerifySSHMagicStrConnection(conn); err != nil {
 		conn.Close()
 		return err
 	}

@@ -166,7 +166,7 @@ func (c *Client) ConnSSHProxy() (net.Conn, error) {
 		log.Errorf("connect to ssh proxy server failed: %s", err.Error())
 		return nil, err
 	}
-	if _, err := sshProxyConn.Write([]byte(common.MagicString)); err != nil {
+	if _, err := sshProxyConn.Write([]byte(common.SSHMagicString)); err != nil {
 		log.Errorf("write magic string to ssh proxy server failed: %s", err.Error())
 		c.Close()
 		return nil, err
