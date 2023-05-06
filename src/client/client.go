@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/hashicorp/yamux"
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
@@ -144,19 +145,37 @@ func (c *Client) HandleSSHProxy() error {
 		return err
 	}
 
-	localSSHFwdConn, err := c.ConnForwardSSHSrv()
+	// session of yamux
+	session, err := yamux.Server(sshProxyConn, nil)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	eg := errgroup.Group{}
-	eg.Go(func() error {
-		return common.CopyDate(sshProxyConn, localSSHFwdConn)
-	})
-	eg.Go(func() error {
-		return common.CopyDate(localSSHFwdConn, sshProxyConn)
-	})
-	log.Infof("wait for ssh proxy exit")
-	err = eg.Wait()
+	go func() {
+		for {
+			stream, err := session.AcceptStream()
+			if err != nil {
+				log.Errorf("accept stream failed: %s", err.Error())
+				return
+			}
+			log.Infof("stream %d accepted", stream.StreamID())
+			go func() {
+				localSSHFwdConn, err := c.ConnForwardSSHSrv()
+				if err != nil {
+					panic(err)
+				}
+				eg := errgroup.Group{}
+				eg.Go(func() error {
+					return common.CopyDate(stream, localSSHFwdConn)
+				})
+				eg.Go(func() error {
+					return common.CopyDate(localSSHFwdConn, stream)
+				})
+				log.Infof("wait for ssh proxy exit")
+				err = eg.Wait()
+			}()
+		}
+	}()
+
 	return err
 }
 

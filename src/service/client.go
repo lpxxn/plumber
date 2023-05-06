@@ -6,6 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/hashicorp/yamux"
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
@@ -79,17 +80,29 @@ func (c *client) StartSSHProxy(config *config.SSHConf) error {
 	if err := c.sshProxy.WaitForTunnelConn(); err != nil {
 		return err
 	}
+	session, err := yamux.Server(c.sshProxy.RemoteTunnelConn, nil)
+	if err != nil {
+		panic(err)
+	}
 	log.Infof("client %s start ssh proxy success", c.RemoteAddr())
 	return c.sshProxy.Start(func(conn net.Conn) {
 		log.Infof("new tcp connection from ssh proxy: %s", conn.RemoteAddr())
+
+		// open a new stream
+		stream, err := session.OpenStream()
+		if err != nil {
+			panic(err)
+		}
+		log.Infof("stream %d is opened", stream.StreamID())
 		eg := errgroup.Group{}
+
 		eg.Go(func() error {
-			return common.CopyDate(conn, c.sshProxy.RemoteTunnelConn)
+			return common.CopyDate(conn, stream)
 		})
 		eg.Go(func() error {
-			return common.CopyDate(c.sshProxy.RemoteTunnelConn, conn)
+			return common.CopyDate(stream, conn)
 		})
-		err := eg.Wait()
+		err = eg.Wait()
 		if err != nil {
 			log.Errorf("copy data failed: %v", err)
 		}

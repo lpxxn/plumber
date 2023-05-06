@@ -120,7 +120,7 @@ func TestYamux2(t *testing.T) {
 			if err != nil {
 				panic(err)
 			}
-			session, err := yamux.Server(conn, nil)
+			session, err := yamux.Client(conn, nil)
 			if err != nil {
 				panic(err)
 			}
@@ -149,7 +149,7 @@ func TestYamux2(t *testing.T) {
 			panic(err)
 		}
 		// setup client side of yamux
-		session, err := yamux.Client(conn, nil)
+		session, err := yamux.Server(conn, nil)
 		if err != nil {
 			panic(err)
 		}
