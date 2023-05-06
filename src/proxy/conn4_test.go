@@ -108,3 +108,69 @@ func TestYamux1(t *testing.T) {
 	clientFunc()
 
 }
+
+func TestYamux2(t *testing.T) {
+	listener, err := net.Listen("tcp", ":8881")
+	if err != nil {
+		panic(err)
+	}
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				panic(err)
+			}
+			session, err := yamux.Server(conn, nil)
+			if err != nil {
+				panic(err)
+			}
+			// accept a stream
+			stream, err := session.Open()
+			if err != nil {
+				panic(err)
+			}
+
+			if _, err = stream.Write([]byte("pong")); err != nil {
+				panic(err)
+			}
+			buf := make([]byte, 4)
+			_, err = stream.Read(buf)
+			if err != nil {
+				panic(err)
+			}
+			t.Logf("serv read: %s", buf)
+		}
+	}()
+
+	clientFunc := func() {
+		// client
+		conn, err := net.Dial("tcp", ":8881")
+		if err != nil {
+			panic(err)
+		}
+		// setup client side of yamux
+		session, err := yamux.Client(conn, nil)
+		if err != nil {
+			panic(err)
+		}
+
+		// open a new stream
+		stream, err := session.AcceptStream()
+		if err != nil {
+			panic(err)
+		}
+		t.Logf("StreamID: %d ", stream.StreamID())
+		buf := make([]byte, 4)
+		_, err = stream.Read(buf)
+		if err != nil {
+			panic(err)
+		}
+		if _, err = stream.Write([]byte("ping")); err != nil {
+			panic(err)
+		}
+		t.Logf("client read: %s", buf)
+	}
+	clientFunc()
+	clientFunc()
+
+}
