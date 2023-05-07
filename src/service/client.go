@@ -62,21 +62,11 @@ func (c *client) SendCommand(b []byte) error {
 	return c.Writer.Flush()
 }
 
-func (c *client) StartSSHProxy(config *config.SSHConf) error {
-	c.sshProxy = &proxy.SSHProxy{
-		SSHConfig: config,
-	}
+func (c *client) newSSHTCPServer() error {
+	return c.sshProxy.NewTCPServer()
+}
 
-	if err := c.sshProxy.NewTCPServer(); err != nil {
-		return err
-	}
-	if _, err := protocol.SendFrameData(c.Conn, &protocol.FrameResp{
-		Code: protocol.Success,
-		Msg:  "success",
-	}); err != nil {
-		log.Errorf("write ready command failed: %v", err)
-		return err
-	}
+func (c *client) startSSHProxy() error {
 	if err := c.sshProxy.WaitForTunnelConn(); err != nil {
 		return err
 	}
@@ -91,7 +81,8 @@ func (c *client) StartSSHProxy(config *config.SSHConf) error {
 		// open a new stream
 		stream, err := session.OpenStream()
 		if err != nil {
-			panic(err)
+			log.Errorf("sshProxy open stream failed: %v", err)
+			return
 		}
 		log.Infof("stream %d is opened", stream.StreamID())
 		eg := errgroup.Group{}
@@ -107,4 +98,21 @@ func (c *client) StartSSHProxy(config *config.SSHConf) error {
 			log.Errorf("copy data failed: %v", err)
 		}
 	})
+}
+
+func (c *client) StartSSHProxy(config *config.SSHConf) error {
+	c.sshProxy = &proxy.SSHProxy{
+		SSHConfig: config,
+	}
+	if err := c.newSSHTCPServer(); err != nil {
+		return err
+	}
+	if _, err := protocol.SendFrameData(c.Conn, &protocol.FrameResp{
+		Code: protocol.Success,
+		Msg:  "success",
+	}); err != nil {
+		log.Errorf("write ready command failed: %v", err)
+		return err
+	}
+	return c.startSSHProxy()
 }
