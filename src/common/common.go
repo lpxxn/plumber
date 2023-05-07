@@ -6,7 +6,9 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 
+	"github.com/hashicorp/yamux"
 	"github.com/lpxxn/plumber/src/log"
 )
 
@@ -121,4 +123,12 @@ func VerifySSHMagicStrConnection(conn net.Conn) error {
 		return errors.New("ssh magic string not match")
 	}
 	return nil
+}
+
+func NewYamuxConfig() *yamux.Config {
+	conf := yamux.DefaultConfig()
+	conf.EnableKeepAlive = true
+	conf.KeepAliveInterval = 10 * time.Second
+	conf.ConnectionWriteTimeout = 10 * time.Second
+	return conf
 }

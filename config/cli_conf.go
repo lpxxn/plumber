@@ -17,6 +17,7 @@ type SSHConf struct {
 	SrvPort      int      `yaml:"srvPort"`
 	LocalSSHAddr string   `yaml:"localSSHAddr"`
 	WhiteList    []string `yaml:"whiteList"`
+	ReConnTimes  int      `yaml:"reConnTimes"`
 }
 
 type HttpProxyConf struct {
@@ -44,6 +45,9 @@ func (s *SSHConf) Validate() error {
 	}
 	if s.LocalSSHAddr == "" {
 		return errors.New("localSSHAddr is empty")
+	}
+	if s.ReConnTimes <= 0 {
+		s.ReConnTimes = -1
 	}
 	_, err := common.TcpAddr(s.LocalSSHAddr)
 	return err

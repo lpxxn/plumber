@@ -6,12 +6,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/hashicorp/yamux"
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
 	"github.com/lpxxn/plumber/src/protocol"
-	"golang.org/x/sync/errgroup"
 )
 
 type Client struct {
@@ -20,7 +18,8 @@ type Client struct {
 	ExitChan chan bool
 	Conn     *Conn
 
-	Conf *config.CliConf
+	sshProxy *SSHProxy
+	Conf     *config.CliConf
 }
 
 func NewClient(conf *config.CliConf) *Client {
@@ -40,9 +39,12 @@ func (c *Client) DryRun() error {
 		return err
 	}
 
-	time.Sleep(10 * time.Second)
 	defer conn.Close()
-
+	if c.sshProxy != nil {
+		if err := c.sshProxy.DryRun(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -116,67 +118,35 @@ func (c *Client) HandleSSHProxy() error {
 		return nil
 	}
 	log.Infof("start ssh proxy")
-	cmd, err := protocol.SSHProxyCmd(c.Conf.SSH)
-	if err != nil {
-		log.Errorf("create ssh proxy cmd failed: %s", err.Error())
-		return err
-	}
-	if _, err := cmd.Write(c.Conn.w); err != nil {
-		log.Errorf("send ssh proxy cmd failed: %s", err.Error())
-		return err
-	}
-	if err := c.Conn.Flush(); err != nil {
-		return err
-	}
-	result, err := protocol.ReadFrameData(c.Conn.r)
-	if err != nil {
-		log.Errorf("read ssh proxy result failed: %s", err.Error())
-		return err
-	}
-	log.Debugf("ssh proxy result: %s code: %d", result.Msg, result.Code)
-	if result.Code != protocol.Success {
-		log.Errorf("ssh proxy failed: %s", result.Msg)
-		return err
-	}
-	log.Infof("ssh proxy success")
-
-	sshProxyConn, err := c.ConnSSHProxy()
-	if err != nil {
-		return err
-	}
-
-	// session of yamux
-	session, err := yamux.Server(sshProxyConn, nil)
-	if err != nil {
-		panic(err)
-	}
-	go func() {
-		for {
-			stream, err := session.AcceptStream()
-			if err != nil {
-				log.Errorf("accept stream failed: %s", err.Error())
-				return
-			}
-			log.Infof("stream %d accepted", stream.StreamID())
-			go func() {
-				localSSHFwdConn, err := c.ConnForwardSSHSrv()
-				if err != nil {
-					panic(err)
-				}
-				eg := errgroup.Group{}
-				eg.Go(func() error {
-					return common.CopyDate(stream, localSSHFwdConn)
-				})
-				eg.Go(func() error {
-					return common.CopyDate(localSSHFwdConn, stream)
-				})
-				log.Infof("wait for ssh proxy exit")
-				err = eg.Wait()
-			}()
+	prepare := func() error {
+		cmd, err := protocol.SSHProxyCmd(c.Conf.SSH)
+		if err != nil {
+			log.Errorf("create ssh proxy cmd failed: %s", err.Error())
+			return err
 		}
-	}()
+		if _, err := cmd.Write(c.Conn.w); err != nil {
+			log.Errorf("send ssh proxy cmd failed: %s", err.Error())
+			return err
+		}
+		if err := c.Conn.Flush(); err != nil {
+			return err
+		}
+		result, err := protocol.ReadFrameData(c.Conn.r)
+		if err != nil {
+			log.Errorf("read ssh proxy result failed: %s", err.Error())
+			return err
+		}
+		log.Debugf("ssh proxy result: %s code: %d", result.Msg, result.Code)
+		if result.Code != protocol.Success {
+			log.Errorf("ssh proxy failed: %s", result.Msg)
+			return err
+		}
+		log.Infof("ssh proxy success")
+		return nil
+	}
+	c.sshProxy = NewSSHProxy(c.Conf.SrvIP, c.Conf.SSH, prepare)
 
-	return err
+	return c.sshProxy.Handle()
 }
 
 func (c *Client) ConnSSHProxy() (net.Conn, error) {
@@ -190,6 +160,7 @@ func (c *Client) ConnSSHProxy() (net.Conn, error) {
 		c.Close()
 		return nil, err
 	}
+	log.Infof("connect to ssh proxy server success")
 	return sshProxyConn, nil
 }
 
