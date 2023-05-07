@@ -49,6 +49,7 @@ func (c *client) Close() error {
 	if c.sshProxy != nil {
 		c.sshProxy.Close()
 	}
+	log.Infof("client %s is closed", c.RemoteAddr())
 	return c.Conn.Close()
 }
 

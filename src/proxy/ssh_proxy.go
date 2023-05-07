@@ -21,6 +21,7 @@ func (s *SSHProxy) Close() error {
 		s.LocalListener.Close()
 		s.LocalListener = nil
 	}
+	log.Infof("SSHProxy: closed")
 	return nil
 }
 
@@ -31,6 +32,7 @@ func (s *SSHProxy) NewTCPServer() error {
 		return err
 	}
 	s.LocalListener = listener
+	log.Infof("SSHProxy: listening on %s", s.LocalListener.Addr())
 	return nil
 }
 
