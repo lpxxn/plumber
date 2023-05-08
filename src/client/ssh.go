@@ -15,18 +15,20 @@ import (
 type Preparer func() error
 
 type SSHProxy struct {
-	sshConf  *config.SSHConf `yaml:"ssh"`
-	ServIP   string
-	Exit     chan struct{}
-	Preparer Preparer
+	sshConf    *config.SSHConf `yaml:"ssh"`
+	ServIP     string
+	Exit       chan struct{}
+	Preparer   Preparer
+	AfterExist func()
 }
 
-func NewSSHProxy(servIP string, sshConf *config.SSHConf, prepare Preparer) *SSHProxy {
+func NewSSHProxy(servIP string, sshConf *config.SSHConf, prepare Preparer, exist func()) *SSHProxy {
 	return &SSHProxy{
-		sshConf:  sshConf,
-		ServIP:   servIP,
-		Exit:     make(chan struct{}),
-		Preparer: prepare,
+		sshConf:    sshConf,
+		ServIP:     servIP,
+		Exit:       make(chan struct{}),
+		Preparer:   prepare,
+		AfterExist: exist,
 	}
 }
 
@@ -76,8 +78,7 @@ func (s *SSHProxy) Handle() error {
 		}
 		if err := s.Preparer(); err != nil {
 			log.Errorf("prepare failed: %s", err.Error())
-			s.fallback()
-			continue
+			goto exit
 		}
 		sshProxyConn, err := s.ConnSSHProxy(s.ServIP)
 		if err != nil {
@@ -105,6 +106,7 @@ func (s *SSHProxy) Handle() error {
 					log.Errorf("connect to local ssh server [%s] failed: %s", s.sshConf.LocalSSHAddr, err.Error())
 					panic(err)
 				}
+				defer localSSHFwdConn.Close()
 				eg := errgroup.Group{}
 				eg.Go(func() error {
 					return common.CopyDate(stream, localSSHFwdConn)
@@ -119,6 +121,7 @@ func (s *SSHProxy) Handle() error {
 	}
 exit:
 	log.Infof("ssh handler exit")
+	s.AfterExist()
 	return nil
 }
 

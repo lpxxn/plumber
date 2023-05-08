@@ -34,13 +34,19 @@ func main() {
 	if err := cli.ConnectToSrv(); err != nil {
 		panic(err)
 	}
-	if err := cli.HandleSSHProxy(); err != nil {
-		panic(err)
-	}
+	go func() {
+		if err := cli.HandleSSHProxy(); err != nil {
+			panic(err)
+		}
+	}()
 	// exit signal
+	log.Info("cli ruing....")
 	ch := make(chan os.Signal)
 	signal.Notify(ch, os.Interrupt)
-	<-ch
+	select {
+	case <-cli.GetExitChan():
+	case <-ch:
+	}
 }
 
 func NewFlags() *flag.FlagSet {

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"sync/atomic"
 	"time"
 
 	"github.com/lpxxn/plumber/config"
@@ -15,21 +16,38 @@ import (
 type Client struct {
 	Hostname string
 
-	ExitChan chan bool
+	exitChan chan bool
 	Conn     *Conn
 
 	sshProxy *SSHProxy
 	Conf     *config.CliConf
+	exist    uint32
+	close    uint32
 }
 
 func NewClient(conf *config.CliConf) *Client {
 	return &Client{
 		Conf:     conf,
-		ExitChan: make(chan bool),
+		exitChan: make(chan bool),
 	}
 }
 
+func (c *Client) GetExitChan() <-chan bool {
+	return c.exitChan
+}
+
+func (c *Client) Exit() {
+	if !atomic.CompareAndSwapUint32(&c.exist, 0, 1) {
+		return
+	}
+	close(c.exitChan)
+}
+
 func (c *Client) Close() error {
+	if !atomic.CompareAndSwapUint32(&c.close, 0, 1) {
+		return nil
+	}
+	c.Conn.Close()
 	return nil
 }
 
@@ -109,7 +127,15 @@ func (c *Client) sendIdentify() error {
 	if _, err := cmd.Write(c.Conn.w); err != nil {
 		return err
 	}
-	return nil
+	return c.Conn.Flush()
+}
+
+func (c *Client) ping() error {
+	pingCmd := protocol.PingCmd()
+	if _, err := pingCmd.Write(c.Conn.w); err != nil {
+		return err
+	}
+	return c.Conn.Flush()
 }
 
 // begin to handle ssh proxy
@@ -144,7 +170,13 @@ func (c *Client) HandleSSHProxy() error {
 		log.Infof("ssh proxy success")
 		return nil
 	}
-	c.sshProxy = NewSSHProxy(c.Conf.SrvIP, c.Conf.SSH, prepare)
+	afterExist := func() {
+		if !c.IsConnValid() {
+			c.Exit()
+			c.Close()
+		}
+	}
+	c.sshProxy = NewSSHProxy(c.Conf.SrvIP, c.Conf.SSH, prepare, afterExist)
 
 	return c.sshProxy.Handle()
 }
@@ -171,4 +203,16 @@ func (c *Client) ConnForwardSSHSrv() (net.Conn, error) {
 		return nil, err
 	}
 	return sshProxyConn, nil
+}
+
+func (c *Client) IsConnValid() bool {
+	if c.Conn == nil {
+		return false
+	}
+
+	// check c.Conn is disconnect
+	if err := c.ping(); err != nil {
+		return false
+	}
+	return true
 }

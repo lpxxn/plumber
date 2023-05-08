@@ -10,7 +10,7 @@ const (
 	IdentifyCommand
 	SSHProxyCommand
 	HttpProxyCommand
-	ReadyCommand
+	PingCommand
 )
 
 func CommandToBytes(cmd CommandType) []byte {

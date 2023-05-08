@@ -114,3 +114,7 @@ func SSHProxyCmd(s *config.SSHConf) (*Command, error) {
 	}
 	return &Command{Type: SSHProxyCommand, Body: body}, nil
 }
+
+func PingCmd() *Command {
+	return &Command{Type: PingCommand}
+}

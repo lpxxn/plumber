@@ -12,12 +12,12 @@ func _() {
 	_ = x[IdentifyCommand-1]
 	_ = x[SSHProxyCommand-2]
 	_ = x[HttpProxyCommand-3]
-	_ = x[ReadyCommand-4]
+	_ = x[PingCommand-4]
 }
 
-const _CommandType_name = "NopIdentifyCommandSSHProxyCommandHttpProxyCommandReadyCommand"
+const _CommandType_name = "NopIdentifyCommandSSHProxyCommandHttpProxyCommandPingCommand"
 
-var _CommandType_index = [...]uint8{0, 3, 18, 33, 49, 61}
+var _CommandType_index = [...]uint8{0, 3, 18, 33, 49, 60}
 
 func (i CommandType) String() string {
 	if i < 0 || i >= CommandType(len(_CommandType_index)-1) {
