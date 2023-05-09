@@ -66,6 +66,24 @@ func (c *Client) DryRun() error {
 	return nil
 }
 
+func (c *Client) Run() error {
+	return c.run()
+}
+
+func (c *Client) run() error {
+	if err := c.ConnectToSrv(); err != nil {
+		return err
+	}
+	defer c.Close()
+
+	go func() {
+		if err := c.HandleSSHProxy(); err != nil {
+			log.Errorf("handle ssh proxy failed: %s", err.Error())
+		}
+	}()
+	return nil
+}
+
 func (c *Client) ConnectToSrv() error {
 	conn, err := c.connectToSrv()
 	if err != nil {

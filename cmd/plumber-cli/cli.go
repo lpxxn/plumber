@@ -31,14 +31,9 @@ func main() {
 		panic(err)
 	}
 	cli := client.NewClient(cliConf)
-	if err := cli.ConnectToSrv(); err != nil {
+	if err := cli.Run(); err != nil {
 		panic(err)
 	}
-	go func() {
-		if err := cli.HandleSSHProxy(); err != nil {
-			panic(err)
-		}
-	}()
 	// exit signal
 	log.Info("cli ruing....")
 	ch := make(chan os.Signal)
