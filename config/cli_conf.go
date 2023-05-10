@@ -7,10 +7,11 @@ import (
 )
 
 type CliConf struct {
-	SrvTCPAddr string         `yaml:"srvTcpAddr"`
-	SrvIP      string         `yaml:"-"`
-	SSH        *SSHConf       `yaml:"ssh"`
-	HttpProxy  *HttpProxyConf `yaml:"httpProxy"`
+	SrvTCPAddr        string         `yaml:"srvTcpAddr"`
+	SrvIP             string         `yaml:"-"`
+	SSH               *SSHConf       `yaml:"ssh"`
+	HttpProxy         *HttpProxyConf `yaml:"httpProxy"`
+	ReConnectionTimes int32          `yaml:"reConnectionTimes"`
 }
 
 type SSHConf struct {
@@ -33,6 +34,9 @@ func (c *CliConf) Validate() error {
 		return err
 	}
 	c.SrvIP = srvIP.IP.String()
+	if c.ReConnectionTimes == 0 {
+		c.ReConnectionTimes = 1
+	}
 	if c.SSH != nil {
 		return c.SSH.Validate()
 	}

@@ -20,6 +20,7 @@ type SSHProxy struct {
 	Exit       chan struct{}
 	Preparer   Preparer
 	AfterExist func()
+	Ready      bool
 }
 
 func NewSSHProxy(servIP string, sshConf *config.SSHConf, prepare Preparer, exist func()) *SSHProxy {

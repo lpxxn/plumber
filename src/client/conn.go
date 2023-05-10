@@ -1,7 +1,7 @@
 package client
 
 import (
-	"io"
+	"bufio"
 	"net"
 
 	"github.com/lpxxn/plumber/config"
@@ -12,8 +12,8 @@ type Conn struct {
 	*net.TCPConn
 
 	// reading/writing interfaces
-	r io.Reader
-	w io.Writer
+	r *bufio.Reader
+	w *bufio.Writer
 
 	Conf *config.CliConf
 }
@@ -21,8 +21,8 @@ type Conn struct {
 func NewConnect(conn *net.TCPConn) (*Conn, error) {
 	c := &Conn{}
 	c.TCPConn = conn
-	c.r = conn
-	c.w = conn
+	c.r = bufio.NewReader(conn)
+	c.w = bufio.NewWriter(conn)
 	if _, err := c.Write([]byte(common.MagicString)); err != nil {
 		c.Close()
 		return nil, err
@@ -39,13 +39,6 @@ func (c *Conn) SendCommand() {
 
 }
 
-type flusher interface {
-	Flush() error
-}
-
 func (c *Conn) Flush() error {
-	if w, ok := c.w.(flusher); ok {
-		return w.Flush()
-	}
-	return nil
+	return c.w.Flush()
 }

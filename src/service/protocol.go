@@ -51,7 +51,8 @@ func (s *ServProtocol) IOLoop(c protocol.Client) error {
 		}
 		resp, err := s.ExecCommand(client, cmdType, params[1:])
 		if err != nil {
-
+			log.Errorf("failed to exec command - %s", err)
+			break
 		}
 		log.Debugf("resp: %s", resp)
 	}

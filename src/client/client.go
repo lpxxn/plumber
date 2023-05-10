@@ -1,8 +1,6 @@
 package client
 
 import (
-	"bufio"
-	"fmt"
 	"net"
 	"sync/atomic"
 	"time"
@@ -19,11 +17,10 @@ type Client struct {
 	exitChan chan bool
 	Conn     *Conn
 
-	sshProxy          *SSHProxy
-	Conf              *config.CliConf
-	exist             uint32
-	close             uint32
-	ReConnectionTimes int32
+	sshProxy *SSHProxy
+	Conf     *config.CliConf
+	exist    uint32
+	close    uint32
 }
 
 func NewClient(conf *config.CliConf) *Client {
@@ -72,7 +69,15 @@ func (c *Client) Run() error {
 }
 
 func (c *Client) run() error {
-	for c.ReConnectionTimes != 0 {
+	reconnectTimes := c.Conf.ReConnectionTimes
+
+	reConnFun := func() {
+		if reconnectTimes > 0 {
+			reconnectTimes--
+		}
+		time.Sleep(time.Second * 3)
+	}
+	for reconnectTimes != 0 {
 		select {
 		case <-c.exitChan:
 			goto exit
@@ -80,18 +85,24 @@ func (c *Client) run() error {
 		}
 		if err := c.ConnectToSrv(); err != nil {
 			// if err is timeout
-			if ne, ok := err.(net.Error); ok && ne.Timeout() {
-				continue
-			}
-			goto exit
+			//if ne, ok := err.(net.Error); ok && ne.Timeout() {
+			//	continue
+			//}
+			//goto exit
+			reConnFun()
+			continue
 		}
 		defer c.Close()
 
-		go func() {
-			if err := c.HandleSSHProxy(); err != nil {
-				log.Errorf("handle ssh proxy failed: %s", err.Error())
-			}
-		}()
+		//go func() {
+		if err := c.HandleSSHProxy(); err != nil {
+			log.Errorf("handle ssh proxy failed: %s", err.Error())
+		}
+		//}()
+
+		// session
+		NewCliProtocol(c).IOLoop()
+		reConnFun()
 	}
 exit:
 	log.Info("cli exit")
@@ -111,8 +122,6 @@ func (c *Client) ConnectToSrv() error {
 		log.Errorf("send identify to server failed: %s", err.Error())
 		return err
 	}
-	c.Conn.r = bufio.NewReader(c.Conn.r)
-	c.Conn.w = bufio.NewWriter(c.Conn.w)
 	return nil
 }
 
@@ -211,30 +220,6 @@ func (c *Client) HandleSSHProxy() error {
 	c.sshProxy = NewSSHProxy(c.Conf.SrvIP, c.Conf.SSH, prepare, afterExist)
 
 	return c.sshProxy.Handle()
-}
-
-func (c *Client) ConnSSHProxy() (net.Conn, error) {
-	sshProxyConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", c.Conf.SrvIP, c.Conf.SSH.SrvPort))
-	if err != nil {
-		log.Errorf("connect to ssh proxy server failed: %s", err.Error())
-		return nil, err
-	}
-	if _, err := sshProxyConn.Write([]byte(common.SSHMagicString)); err != nil {
-		log.Errorf("write magic string to ssh proxy server failed: %s", err.Error())
-		c.Close()
-		return nil, err
-	}
-	log.Infof("connect to ssh proxy server success")
-	return sshProxyConn, nil
-}
-
-func (c *Client) ConnForwardSSHSrv() (net.Conn, error) {
-	sshProxyConn, err := net.Dial("tcp", c.Conf.SSH.LocalSSHAddr)
-	if err != nil {
-		log.Errorf("connect to local ssh [%s] failed: %s", c.Conf.SSH.LocalSSHAddr, err.Error())
-		return nil, err
-	}
-	return sshProxyConn, nil
 }
 
 func (c *Client) IsConnValid() bool {
