@@ -19,10 +19,11 @@ type Client struct {
 	exitChan chan bool
 	Conn     *Conn
 
-	sshProxy *SSHProxy
-	Conf     *config.CliConf
-	exist    uint32
-	close    uint32
+	sshProxy          *SSHProxy
+	Conf              *config.CliConf
+	exist             uint32
+	close             uint32
+	ReConnectionTimes int32
 }
 
 func NewClient(conf *config.CliConf) *Client {
@@ -71,16 +72,29 @@ func (c *Client) Run() error {
 }
 
 func (c *Client) run() error {
-	if err := c.ConnectToSrv(); err != nil {
-		return err
-	}
-	defer c.Close()
-
-	go func() {
-		if err := c.HandleSSHProxy(); err != nil {
-			log.Errorf("handle ssh proxy failed: %s", err.Error())
+	for c.ReConnectionTimes != 0 {
+		select {
+		case <-c.exitChan:
+			goto exit
+		default:
 		}
-	}()
+		if err := c.ConnectToSrv(); err != nil {
+			// if err is timeout
+			if ne, ok := err.(net.Error); ok && ne.Timeout() {
+				continue
+			}
+			goto exit
+		}
+		defer c.Close()
+
+		go func() {
+			if err := c.HandleSSHProxy(); err != nil {
+				log.Errorf("handle ssh proxy failed: %s", err.Error())
+			}
+		}()
+	}
+exit:
+	log.Info("cli exit")
 	return nil
 }
 
