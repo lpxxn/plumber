@@ -33,6 +33,7 @@ func TCPServer(listener net.Listener, handler TCPHandler) error {
 
 		wg.Add(1)
 		go func() {
+			defer clientConn.Close()
 			handler(clientConn)
 			wg.Done()
 		}()
