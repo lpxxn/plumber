@@ -94,17 +94,17 @@ func (c *Client) run() error {
 		}
 		defer c.Close()
 
-		//go func() {
 		if err := c.HandleSSHProxy(); err != nil {
 			log.Errorf("handle ssh proxy failed: %s", err.Error())
+			goto exit
 		}
-		//}()
 
 		// session
 		NewCliProtocol(c).IOLoop()
 		reConnFun()
 	}
 exit:
+	c.Exit()
 	log.Info("cli exit")
 	return nil
 }
@@ -185,41 +185,46 @@ func (c *Client) HandleSSHProxy() error {
 		return nil
 	}
 	log.Infof("start ssh proxy")
-	prepare := func() error {
-		cmd, err := protocol.SSHProxyCmd(c.Conf.SSH)
-		if err != nil {
-			log.Errorf("create ssh proxy cmd failed: %s", err.Error())
-			return err
-		}
-		if _, err := cmd.Write(c.Conn.w); err != nil {
-			log.Errorf("send ssh proxy cmd failed: %s", err.Error())
-			return err
-		}
-		if err := c.Conn.Flush(); err != nil {
-			return err
-		}
-		result, err := protocol.ReadFrameData(c.Conn.r)
-		if err != nil {
-			log.Errorf("read ssh proxy result failed: %s", err.Error())
-			return err
-		}
-		log.Debugf("ssh proxy result: %s code: %d", result.Msg, result.Code)
-		if result.Code != protocol.Success {
-			log.Errorf("ssh proxy failed: %s", result.Msg)
-			return err
-		}
-		log.Infof("ssh proxy success")
-		return nil
+	cmd, err := protocol.SSHProxyCmd(c.Conf.SSH)
+	if err != nil {
+		log.Errorf("create ssh proxy cmd failed: %s", err.Error())
+		return err
 	}
-	afterExist := func() {
+	if _, err := cmd.Write(c.Conn.w); err != nil {
+		log.Errorf("send ssh proxy cmd failed: %s", err.Error())
+		return err
+	}
+	if err := c.Conn.Flush(); err != nil {
+		return err
+	}
+	result, err := protocol.ReadFrameData(c.Conn.r)
+	if err != nil {
+		log.Errorf("read ssh proxy result failed: %s", err.Error())
+		return err
+	}
+	log.Debugf("ssh proxy result: %s code: %d", result.Msg, result.Code)
+	if result.Code != protocol.Success {
+		log.Errorf("ssh proxy failed: %s", result.Msg)
+		return err
+	}
+	log.Infof("ssh proxy success")
+	c.sshProxy = NewSSHProxy(c.Conf.SrvIP, c.Conf.SSH)
+
+	if err := c.sshProxy.Handle(); err != nil {
+		c.sshProxy.Close()
+		return err
+	}
+	go func() {
+		<-c.sshProxy.Exit
 		if !c.IsConnValid() {
 			c.Exit()
 			c.Close()
+		} else {
+			time.Sleep(time.Second * 1)
+			go c.HandleSSHProxy()
 		}
-	}
-	c.sshProxy = NewSSHProxy(c.Conf.SrvIP, c.Conf.SSH, prepare, afterExist)
-
-	return c.sshProxy.Handle()
+	}()
+	return nil
 }
 
 func (c *Client) IsConnValid() bool {

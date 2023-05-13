@@ -98,6 +98,7 @@ func (c *client) startSSHProxy() error {
 		if err != nil {
 			log.Errorf("copy data failed: %v", err)
 		}
+		log.Infof("stream %d is closed", stream.StreamID())
 	})
 }
 

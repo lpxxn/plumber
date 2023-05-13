@@ -2,8 +2,7 @@ package client
 
 import (
 	"bytes"
-	"fmt"
-	"io"
+	"net"
 	"time"
 
 	"github.com/lpxxn/plumber/src/common"
@@ -23,22 +22,29 @@ func (c *CliProtocol) IOLoop() error {
 	client := c.Client
 	var err error
 	var header []byte
-	var zeroTime time.Time
-	return nil
+	//var zeroTime time.Time
 	// read data from client
 	for {
-		client.Conn.SetReadDeadline(zeroTime)
+		select {
+		case <-client.exitChan:
+			return nil
+		default:
+		}
+		client.Conn.SetReadDeadline(time.Now().Add(time.Second * 2))
 		// ReadSlice does not allocate new space for the data each request
 		// the returned slice is only valid until the next call to it
 		header, err = client.Conn.r.ReadSlice(common.NewLineByte)
 		if err != nil {
-			log.Errorf("failed to read command - %s", err)
-			if err == io.EOF {
-				err = nil
-			} else {
-				err = fmt.Errorf("failed to read command - %s", err)
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				continue
 			}
-			break
+			log.Errorf("failed to read command - %s", err)
+			//if err == io.EOF {
+			//	err = nil
+			//} else {
+			//	err = fmt.Errorf("failed to read command - %s", err)
+			//}
+			return err
 		}
 		log.Debugf("client(%c) host %c recv: %c", client.Conn.RemoteAddr(), client.Hostname, header)
 		// trim \n

@@ -15,25 +15,25 @@ import (
 type Preparer func() error
 
 type SSHProxy struct {
-	sshConf    *config.SSHConf `yaml:"ssh"`
-	ServIP     string
-	Exit       chan struct{}
-	Preparer   Preparer
-	AfterExist func()
-	Ready      bool
+	sshConf      *config.SSHConf `yaml:"ssh"`
+	SSHProxyConn net.Conn
+	ServIP       string
+	Exit         chan struct{}
 }
 
-func NewSSHProxy(servIP string, sshConf *config.SSHConf, prepare Preparer, exist func()) *SSHProxy {
+func NewSSHProxy(servIP string, sshConf *config.SSHConf) *SSHProxy {
 	return &SSHProxy{
-		sshConf:    sshConf,
-		ServIP:     servIP,
-		Exit:       make(chan struct{}),
-		Preparer:   prepare,
-		AfterExist: exist,
+		sshConf: sshConf,
+		ServIP:  servIP,
+		Exit:    make(chan struct{}),
 	}
 }
 
 func (s *SSHProxy) Close() error {
+	if s.SSHProxyConn != nil {
+		s.SSHProxyConn.Close()
+		s.SSHProxyConn = nil
+	}
 	return nil
 }
 
@@ -42,12 +42,12 @@ func (s *SSHProxy) DryRun() error {
 }
 
 func (s *SSHProxy) testConnection() error {
-	sshProxyConn, err := s.ConnSSHProxy(s.ServIP)
+	err := s.ConnSSHProxy(s.ServIP)
 	if err != nil {
 		log.Errorf("connect to ssh proxy server failed: %s", err.Error())
 		return err
 	}
-	defer sshProxyConn.Close()
+	defer s.SSHProxyConn.Close()
 	localSSHFwdConn, err := s.ConnForwardSSHSrv()
 	if err != nil {
 		log.Errorf("connect to local ssh server failed: %s", err.Error())
@@ -70,35 +70,30 @@ func (s *SSHProxy) fallback() {
 }
 
 func (s *SSHProxy) Handle() error {
-	for s.sshConf.ReConnTimes != 0 {
-		select {
-		case <-s.Exit:
-			log.Infof("ssh handler exit")
-			goto exit
-		default:
-		}
-		if err := s.Preparer(); err != nil {
-			log.Errorf("prepare failed: %s", err.Error())
-			goto exit
-		}
-		sshProxyConn, err := s.ConnSSHProxy(s.ServIP)
-		if err != nil {
-			log.Errorf("connect to ssh proxy server failed: %s", err.Error())
-			s.fallback()
-			continue
-		}
-		defer sshProxyConn.Close()
-
-		session, err := yamux.Server(sshProxyConn, common.NewYamuxConfig())
-		if err != nil {
-			log.Errorf("create yamux session failed: %s", err.Error())
-			return err
-		}
+	err := s.ConnSSHProxy(s.ServIP)
+	if err != nil {
+		log.Errorf("connect to ssh proxy server failed: %s", err.Error())
+		return nil
+	}
+	if testLocalSSHFwdConn, err := s.ConnForwardSSHSrv(); err != nil {
+		log.Errorf("connect to local ssh server [%s] failed: %s", s.sshConf.LocalSSHAddr, err.Error())
+		return err
+	} else {
+		testLocalSSHFwdConn.Close()
+	}
+	session, err := yamux.Server(s.SSHProxyConn, common.NewYamuxConfig())
+	if err != nil {
+		log.Errorf("create yamux session failed: %s", err.Error())
+		return err
+	}
+	go func() {
+		defer session.Close()
 		for {
 			stream, err := session.AcceptStream()
 			if err != nil {
 				log.Errorf("accept stream failed: %s", err.Error())
-				break
+				close(s.Exit)
+				return
 			}
 			log.Infof("stream %d accepted", stream.StreamID())
 			go func() {
@@ -116,29 +111,31 @@ func (s *SSHProxy) Handle() error {
 					return common.CopyDate(localSSHFwdConn, stream)
 				})
 				log.Infof("wait for ssh proxy exit")
-				err = eg.Wait()
+				if err = eg.Wait(); err != nil {
+					log.Errorf("copy data failed: %s", err.Error())
+				}
+				log.Infof("stream %d closed", stream.StreamID())
 			}()
 		}
-	}
-exit:
-	log.Infof("ssh handler exit")
-	s.AfterExist()
+	}()
+
 	return nil
 }
 
-func (s *SSHProxy) ConnSSHProxy(srvIP string) (net.Conn, error) {
+func (s *SSHProxy) ConnSSHProxy(srvIP string) error {
 	sshProxyConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", srvIP, s.sshConf.SrvPort))
 	if err != nil {
 		log.Errorf("connect to ssh proxy server failed: %s", err.Error())
-		return nil, err
+		return err
 	}
 	if _, err := sshProxyConn.Write([]byte(common.SSHMagicString)); err != nil {
 		log.Errorf("write magic string to ssh proxy server failed: %s", err.Error())
 		s.Close()
-		return nil, err
+		return err
 	}
+	s.SSHProxyConn = sshProxyConn
 	log.Infof("connect to ssh proxy server [%s] success", sshProxyConn.RemoteAddr())
-	return sshProxyConn, nil
+	return nil
 }
 
 func (s *SSHProxy) ConnForwardSSHSrv() (net.Conn, error) {

@@ -42,6 +42,7 @@ func main() {
 	case <-cli.GetExitChan():
 	case <-ch:
 	}
+	log.Infof("cli exit!")
 }
 
 func NewFlags() *flag.FlagSet {
