@@ -70,12 +70,12 @@ func (c *Client) Run() error {
 
 func (c *Client) run() error {
 	reconnectTimes := c.Conf.ReConnectionTimes
-
 	reConnFun := func() {
 		if reconnectTimes > 0 {
 			reconnectTimes--
 		}
 		time.Sleep(time.Second * 3)
+		log.Info("reconnect to server...")
 	}
 	for reconnectTimes != 0 {
 		select {
@@ -216,13 +216,9 @@ func (c *Client) HandleSSHProxy() error {
 	}
 	go func() {
 		<-c.sshProxy.Exit
-		if !c.IsConnValid() {
-			c.Exit()
-			c.Close()
-		} else {
-			time.Sleep(time.Second * 1)
-			go c.HandleSSHProxy()
-		}
+		c.sshProxy.Close()
+		time.Sleep(time.Second * 1)
+		c.HandleSSHProxy()
 	}()
 	return nil
 }

@@ -35,7 +35,7 @@ func (c *CliConf) Validate() error {
 	}
 	c.SrvIP = srvIP.IP.String()
 	if c.ReConnectionTimes == 0 {
-		c.ReConnectionTimes = 1
+		c.ReConnectionTimes = -1
 	}
 	if c.SSH != nil {
 		return c.SSH.Validate()
