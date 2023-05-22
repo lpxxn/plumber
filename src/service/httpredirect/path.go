@@ -1,4 +1,4 @@
-package route
+package httpredirect
 
 import (
 	"regexp"

@@ -1,4 +1,4 @@
-package route
+package httpredirect
 
 import (
 	"fmt"
@@ -10,7 +10,6 @@ import (
 
 // go test -race -run Test_Path_parseRoute
 func Test_Path_parseRoute(t *testing.T) {
-	t.Parallel()
 	var rp routeParser
 	rp = parseRoute("/shop/product/::filter/color::color/size::size")
 	assert.Equal(t, routeParser{
@@ -132,7 +131,6 @@ func Test_Path_parseRoute(t *testing.T) {
 
 // go test -race -run Test_Path_matchParams
 func Test_Path_matchParams(t *testing.T) {
-	t.Parallel()
 	type testparams struct {
 		url          string
 		params       []string
@@ -610,7 +608,6 @@ func Test_Path_matchParams(t *testing.T) {
 
 // go test -race -run Test_RoutePatternMatch
 func Test_RoutePatternMatch(t *testing.T) {
-	t.Parallel()
 	type testparams struct {
 		url   string
 		match bool
@@ -1062,7 +1059,6 @@ func Test_RoutePatternMatch(t *testing.T) {
 }
 
 func Test_Utils_GetTrimmedParam(t *testing.T) {
-	t.Parallel()
 	res := GetTrimmedParam("")
 	assert.Equal(t, "", res)
 	res = GetTrimmedParam("*")
@@ -1076,7 +1072,6 @@ func Test_Utils_GetTrimmedParam(t *testing.T) {
 }
 
 func Test_Utils_RemoveEscapeChar(t *testing.T) {
-	t.Parallel()
 	res := RemoveEscapeChar(":test\\:bla")
 	assert.Equal(t, ":test:bla", res)
 	res = RemoveEscapeChar("\\abc")
