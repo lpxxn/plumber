@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -70,14 +71,19 @@ func TestReverse(t *testing.T) {
 }
 
 func TestReverse2(t *testing.T) {
-
+	type rev struct {
+		Name string
+		Age  int
+	}
 	go func() {
 		go func() {
 			http.ListenAndServe(":5678", &TestHandler{t: t})
 		}()
 		http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("my-header", "my-header-value")
-			w.Write([]byte("hello2222"))
+			w.WriteHeader(http.StatusOK)
+			body, _ := json.Marshal(rev{Name: "test", Age: 18})
+			w.Write(body)
 		})
 		http.ListenAndServe(":5679", nil)
 	}()
@@ -86,6 +92,13 @@ func TestReverse2(t *testing.T) {
 	resp, err := http.DefaultClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
+	body := &rev{}
+	defer resp.Body.Close()
+	err = json.NewDecoder(resp.Body).Decode(body)
+	assert.Nil(t, err)
+	t.Logf("resp: %+v", resp)
+	t.Logf("header: %+v", resp.Header)
+	t.Logf("body: %+v", body)
 
 }
 
