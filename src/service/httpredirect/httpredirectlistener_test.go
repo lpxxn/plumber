@@ -49,6 +49,8 @@ func TestHttpRedirectPeekHeader(t *testing.T) {
 		Conn: conn,
 		r:    bufio.NewReader(conn),
 	}
+	isHttp := httpRedirectCon.CheckIsHttp()
+	assert.True(t, isHttp)
 	idx, err := httpRedirectCon.Read([]byte{})
 	if err != nil {
 		t.Fatal(err)
