@@ -146,3 +146,20 @@ func (h *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	_, err = io.Copy(w, resp.Body)
 	assert.Nil(t, err)
 }
+
+func TestHttpRedirectListener_Accept(t *testing.T) {
+	ln, err := net.Listen("tcp", ":6060")
+	assert.Nil(t, err)
+	httpRedListen := &httpRedirectListener{
+		Listener: ln,
+	}
+	go func() {
+		conn, err := httpRedListen.Accept()
+		assert.Nil(t, err)
+		assert.NotNil(t, conn)
+
+		if hc, ok := conn.(*httpRedirectConn); ok {
+			t.Logf("hc: %t", hc.CheckIsHttp())
+		}
+	}()
+}

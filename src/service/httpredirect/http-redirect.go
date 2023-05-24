@@ -29,7 +29,6 @@ type httpRedirectConn struct {
 }
 
 func (c *httpRedirectConn) Read(p []byte) (int, error) {
-
 	return c.r.Read(p)
 }
 
