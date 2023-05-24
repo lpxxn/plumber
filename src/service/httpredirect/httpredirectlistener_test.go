@@ -126,8 +126,7 @@ func (h *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	newUrl, err := url.Parse("http://127.0.0.1:5679")
 	assert.Nil(t, err)
-	r.URL.Scheme = newUrl.Scheme
-	r.URL.Host = newUrl.Host
+	rewriteRequestURL(r, newUrl)
 	resp, err := rt.RoundTrip(r)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
