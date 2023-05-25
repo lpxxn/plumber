@@ -3,6 +3,7 @@ package httpredirect
 import (
 	"bufio"
 	"net"
+	"net/http"
 	"sync"
 )
 
@@ -32,6 +33,14 @@ func (c *httpRedirectConn) Read(p []byte) (int, error) {
 	return c.r.Read(p)
 }
 
+func (c *httpRedirectConn) GetHttpRequest() (*http.Request, error) {
+	if !c.CheckIsHttp() {
+		return nil, nil
+	}
+	// Parse the HTTP request, so we can get the Host and URL to redirect to.
+	return http.ReadRequest(c.r)
+}
+
 func (c *httpRedirectConn) CheckIsHttp() bool {
 	firstBytes, err := c.r.Peek(5)
 	if err != nil {
@@ -43,11 +52,6 @@ func (c *httpRedirectConn) CheckIsHttp() bool {
 	if !firstBytesLookLikeHTTP(firstBytes) {
 		return false
 	}
-	// Parse the HTTP request, so we can get the Host and URL to redirect to.
-	//req, err := http.ReadRequest(c.r)
-	//if err != nil {
-	//	return 0, err
-	//}
 
 	return true
 }

@@ -202,3 +202,65 @@ func TestHttpRedirectListener_Accept(t *testing.T) {
 	t.Logf("header: %+v", resp.Header)
 	t.Logf("body: %+v", body)
 }
+
+func TestHttpRedirectListener_Accept2(t *testing.T) {
+	type rev struct {
+		Name string
+		Age  int
+	}
+	go func() {
+		http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+			t.Logf("header: %+v", r.Header)
+			w.Header().Set("my-header", "my-header-value")
+			w.WriteHeader(http.StatusOK)
+			body, _ := json.Marshal(rev{Name: "test", Age: 18})
+			t.Log("=========")
+			w.Write(body)
+		})
+		http.ListenAndServe(":5679", nil)
+	}()
+
+	ln, err := net.Listen("tcp", ":6060")
+	assert.Nil(t, err)
+	httpRedListen := &httpRedirectListener{
+		Listener: ln,
+	}
+	go func() {
+		conn, err := httpRedListen.Accept()
+		assert.Nil(t, err)
+		assert.NotNil(t, conn)
+
+		hc, ok := conn.(*httpRedirectConn)
+		if !ok {
+			t.Logf("is http request: %t", hc.CheckIsHttp())
+			return
+		}
+		req, err := hc.GetHttpRequest()
+		assert.Nil(t, err)
+		t.Logf("url: %s", req.URL.String())
+
+		dialer := &net.Dialer{
+			Timeout: time.Duration(time.Second * 30),
+		}
+		forwardCon, err := dialer.Dial("tcp", ":5679")
+		assert.Nil(t, err)
+		req.Write(forwardCon)
+
+		_, err = io.Copy(conn, forwardCon)
+		assert.Nil(t, err)
+	}()
+
+	time.Sleep(time.Second)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:6060/test", nil)
+	req.Header.Set("hi", "hi-value")
+	resp, err := http.DefaultClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	body := &rev{}
+	defer resp.Body.Close()
+	err = json.NewDecoder(resp.Body).Decode(body)
+	assert.Nil(t, err)
+	t.Logf("resp: %+v", resp)
+	t.Logf("header: %+v", resp.Header)
+	t.Logf("body: %+v", body)
+}
