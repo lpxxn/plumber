@@ -148,6 +148,21 @@ func (h *TestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func TestHttpRedirectListener_Accept(t *testing.T) {
+	type rev struct {
+		Name string
+		Age  int
+	}
+	go func() {
+		http.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("my-header", "my-header-value")
+			w.WriteHeader(http.StatusOK)
+			body, _ := json.Marshal(rev{Name: "test", Age: 18})
+			t.Log("=========")
+			w.Write(body)
+		})
+		http.ListenAndServe(":5679", nil)
+	}()
+
 	ln, err := net.Listen("tcp", ":6060")
 	assert.Nil(t, err)
 	httpRedListen := &httpRedirectListener{
@@ -159,7 +174,31 @@ func TestHttpRedirectListener_Accept(t *testing.T) {
 		assert.NotNil(t, conn)
 
 		if hc, ok := conn.(*httpRedirectConn); ok {
-			t.Logf("hc: %t", hc.CheckIsHttp())
+			t.Logf("is http request: %t", hc.CheckIsHttp())
 		}
+		dialer := &net.Dialer{
+			Timeout: time.Duration(time.Second * 30),
+		}
+		forwardCon, err := dialer.Dial("tcp", ":5679")
+		assert.Nil(t, err)
+		go func() {
+			_, err = io.Copy(conn, forwardCon)
+			assert.Nil(t, err)
+		}()
+		_, err = io.Copy(forwardCon, conn)
+		assert.Nil(t, err)
 	}()
+
+	time.Sleep(time.Second)
+	req, err := http.NewRequest(http.MethodGet, "http://127.0.0.1:6060/test", nil)
+	resp, err := http.DefaultClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	body := &rev{}
+	defer resp.Body.Close()
+	err = json.NewDecoder(resp.Body).Decode(body)
+	assert.Nil(t, err)
+	t.Logf("resp: %+v", resp)
+	t.Logf("header: %+v", resp.Header)
+	t.Logf("body: %+v", body)
 }
