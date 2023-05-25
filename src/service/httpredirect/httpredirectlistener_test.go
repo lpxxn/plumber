@@ -244,7 +244,8 @@ func TestHttpRedirectListener_Accept2(t *testing.T) {
 		}
 		forwardCon, err := dialer.Dial("tcp", ":5679")
 		assert.Nil(t, err)
-		req.Write(forwardCon)
+		err = req.Write(forwardCon)
+		assert.Nil(t, err)
 
 		_, err = io.Copy(conn, forwardCon)
 		assert.Nil(t, err)
