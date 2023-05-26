@@ -47,8 +47,6 @@ func (c *httpRedirectConn) CheckIsHttp() bool {
 		return false
 	}
 
-	// If the request doesn't look like HTTP, then it's probably
-	// TLS bytes and we don't need to do anything.
 	if !firstBytesLookLikeHTTP(firstBytes) {
 		return false
 	}
