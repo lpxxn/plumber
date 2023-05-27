@@ -626,6 +626,15 @@ func Test_RoutePatternMatch(t *testing.T) {
 		{url: "/api/v2", match: false},
 		{url: "/api/v1/", match: false},
 	})
+
+	testCase("/*", []testparams{
+		{url: "/api", match: true},
+		{url: "/entity/", match: true},
+		{url: "/api/v1/entity/1", match: true},
+		{url: "/api/v", match: true},
+		{url: "/api/v2", match: true},
+		{url: "/api/v1/", match: true},
+	})
 	testCase("/api/v1/:param/+", []testparams{
 		{url: "/api/v1/entity", match: false},
 		{url: "/api/v1/entity/", match: false},
