@@ -9,6 +9,7 @@ import (
 
 type httpRedirectListener struct {
 	net.Listener
+	Router *Router
 }
 
 func (l *httpRedirectListener) Accept() (net.Conn, error) {

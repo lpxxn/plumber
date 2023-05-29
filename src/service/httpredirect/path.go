@@ -133,7 +133,7 @@ func RoutePatternMatch(path, pattern string) bool {
 		patternPretty = strings.TrimRight(patternPretty, "/")
 	}
 
-	parser := parseRoute(patternPretty)
+	parser := ParseRoute(patternPretty)
 
 	if patternPretty == "/" && path == "/" {
 		return true
@@ -157,9 +157,9 @@ func RoutePatternMatch(path, pattern string) bool {
 	return false
 }
 
-// parseRoute analyzes the route and divides it into segments for constant areas and parameters,
+// ParseRoute analyzes the route and divides it into segments for constant areas and parameters,
 // this information is needed later when assigning the requests to the declared routes
-func parseRoute(pattern string) routeParser {
+func ParseRoute(pattern string) routeParser {
 	parser := routeParser{}
 
 	part := ""
@@ -189,7 +189,7 @@ func parseRoute(pattern string) routeParser {
 	return parser
 }
 
-// addParameterMetaInfo add important meta information to the parameter segments
+// addParameterMetaInfo Add important meta information to the parameter segments
 // to simplify the search for the end of the parameter
 func addParameterMetaInfo(segs []*routeSegment) []*routeSegment {
 	var comparePart string
@@ -348,7 +348,7 @@ func (routeParser *routeParser) analyseParameterPart(pattern string) (string, *r
 		paramName = RemoveEscapeChar(GetTrimmedParam(pattern[0:parameterConstraintStart]))
 	}
 
-	// add access iterator to wildcard and plus
+	// Add access iterator to wildcard and plus
 	if isWildCard {
 		routeParser.wildCardCount++
 		paramName += strconv.Itoa(routeParser.wildCardCount)

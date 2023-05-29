@@ -11,7 +11,7 @@ import (
 // go test -race -run Test_Path_parseRoute
 func Test_Path_parseRoute(t *testing.T) {
 	var rp routeParser
-	rp = parseRoute("/shop/product/::filter/color::color/size::size")
+	rp = ParseRoute("/shop/product/::filter/color::color/size::size")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/shop/product/:", Length: 15},
@@ -24,7 +24,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		params: []string{"filter", "color", "size"},
 	}, rp)
 
-	rp = parseRoute("/api/v1/:param/abc/*")
+	rp = ParseRoute("/api/v1/:param/abc/*")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/api/v1/", Length: 8},
@@ -36,7 +36,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		wildCardCount: 1,
 	}, rp)
 
-	rp = parseRoute("/v1/some/resource/name\\:customVerb")
+	rp = ParseRoute("/v1/some/resource/name\\:customVerb")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/v1/some/resource/name:customVerb", Length: 33, IsLast: true},
@@ -44,7 +44,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		params: nil,
 	}, rp)
 
-	rp = parseRoute("/v1/some/resource/:name\\:customVerb")
+	rp = ParseRoute("/v1/some/resource/:name\\:customVerb")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/v1/some/resource/", Length: 18},
@@ -55,7 +55,7 @@ func Test_Path_parseRoute(t *testing.T) {
 	}, rp)
 
 	// heavy test with escaped charaters
-	rp = parseRoute("/v1/some/resource/name\\\\:customVerb?\\?/:param/*")
+	rp = ParseRoute("/v1/some/resource/name\\\\:customVerb?\\?/:param/*")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/v1/some/resource/name:customVerb??/", Length: 36},
@@ -67,7 +67,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		wildCardCount: 1,
 	}, rp)
 
-	rp = parseRoute("/api/*/:param/:param2")
+	rp = ParseRoute("/api/*/:param/:param2")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/api/", Length: 5, HasOptionalSlash: true},
@@ -81,7 +81,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		wildCardCount: 1,
 	}, rp)
 
-	rp = parseRoute("/test:optional?:optional2?")
+	rp = ParseRoute("/test:optional?:optional2?")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/test", Length: 5},
@@ -91,7 +91,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		params: []string{"optional", "optional2"},
 	}, rp)
 
-	rp = parseRoute("/config/+.json")
+	rp = ParseRoute("/config/+.json")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/config/", Length: 8},
@@ -102,7 +102,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		plusCount: 1,
 	}, rp)
 
-	rp = parseRoute("/api/:day.:month?.:year?")
+	rp = ParseRoute("/api/:day.:month?.:year?")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/api/", Length: 5},
@@ -115,7 +115,7 @@ func Test_Path_parseRoute(t *testing.T) {
 		params: []string{"day", "month", "year"},
 	}, rp)
 
-	rp = parseRoute("/*v1*/proxy")
+	rp = ParseRoute("/*v1*/proxy")
 	assert.Equal(t, routeParser{
 		segs: []*routeSegment{
 			{Const: "/", Length: 1, HasOptionalSlash: true},
@@ -139,7 +139,7 @@ func Test_Path_matchParams(t *testing.T) {
 	}
 	var ctxParams [maxParams]string
 	testCase := func(r string, cases []testparams) {
-		parser := parseRoute(r)
+		parser := ParseRoute(r)
 		for _, c := range cases {
 			match := parser.getMatch(c.url, c.url, &ctxParams, c.partialCheck)
 			assert.Equal(t, c.match, match, fmt.Sprintf("route: '%s', url: '%s'", r, c.url))
@@ -1099,7 +1099,7 @@ func Benchmark_Path_matchParams(t *testing.B) {
 	}
 	var ctxParams [maxParams]string
 	benchCase := func(r string, cases []testparams) {
-		parser := parseRoute(r)
+		parser := ParseRoute(r)
 		for _, c := range cases {
 			var matchRes bool
 			state := "match"
