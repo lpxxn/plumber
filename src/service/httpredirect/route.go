@@ -19,16 +19,23 @@ type Route struct {
 	ForwardHost func() *net.Conn
 }
 
-func (r *Router) Add(path string) (*Route, error) {
-	route := &Route{
-		OriginPath:  path,
-		RouteParser: ParseRoute(path),
+func (r *Router) Add(pathRaw string) (*Route, error) {
+	if pathRaw == "" {
+		pathRaw = "/"
 	}
-	if _, ok := r.routes[path]; ok {
-		log.Errorf("route already exists: %s", path)
+	// Path always start with a '/'
+	if pathRaw[0] != '/' {
+		pathRaw = "/" + pathRaw
+	}
+	route := &Route{
+		OriginPath:  pathRaw,
+		RouteParser: ParseRoute(pathRaw),
+	}
+	if _, ok := r.routes[pathRaw]; ok {
+		log.Errorf("route already exists: %s", pathRaw)
 		return nil, errors.New("route already exists")
 	}
-	r.routes[path] = route
+	r.routes[pathRaw] = route
 	return route, nil
 }
 
