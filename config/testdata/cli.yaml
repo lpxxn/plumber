@@ -1,4 +1,5 @@
 srvTcpAddr: 127.0.0.1:9870
+name: lpxxn
 ssh:
   srvPort: 7222
   localSSHAddr: 127.0.0.1:7655

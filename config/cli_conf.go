@@ -7,11 +7,12 @@ import (
 )
 
 type CliConf struct {
-	SrvTCPAddr        string         `yaml:"srvTcpAddr"`
-	SrvIP             string         `yaml:"-"`
-	SSH               *SSHConf       `yaml:"ssh"`
-	HttpProxy         *HttpProxyConf `yaml:"httpProxy"`
-	ReConnectionTimes int32          `yaml:"reConnectionTimes"`
+	Name              string               `yaml:"name,required"`
+	SrvTCPAddr        string               `yaml:"srvTcpAddr"`
+	SrvIP             string               `yaml:"-"`
+	SSH               *SSHConf             `yaml:"ssh"`
+	HttpProxy         *ClientHttpProxyConf `yaml:"httpProxy"`
+	ReConnectionTimes int32                `yaml:"reConnectionTimes"`
 }
 
 type SSHConf struct {
@@ -21,11 +22,14 @@ type SSHConf struct {
 	ReConnTimes  int      `yaml:"reConnTimes"`
 }
 
-type HttpProxyConf struct {
-	SrvPort int `yaml:"srvPort"`
+type ClientHttpProxyConf struct {
+	LocalHttpSrvPort int `yaml:"LocalHttpSrvPort"`
 }
 
 func (c *CliConf) Validate() error {
+	if c.Name == "" {
+		return errors.New("name is empty")
+	}
 	if c.SrvTCPAddr == "" {
 		return errors.New("srvTcpAddr is empty")
 	}

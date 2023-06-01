@@ -145,6 +145,7 @@ func TestSrvConf(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotEmpty(t, srvConf.TCPAddr)
 	t.Log(srvConf)
+	t.Log(srvConf.HttpProxy)
 
 }
 
@@ -156,7 +157,7 @@ func TestCliConf(t *testing.T) {
 	dec := yaml.NewDecoder(bytes.NewReader(body))
 	tf := func(testFunc func(conf *CliConf)) {
 		cliConf := &CliConf{}
-		err = dec.Decode(cliConf)
+		err = dec.Decode(cliConf)≠
 		assert.Nil(t, err)
 		testFunc(cliConf)
 	}
