@@ -165,7 +165,7 @@ func TestHttpRedirectListener_Accept(t *testing.T) {
 
 	ln, err := net.Listen("tcp", ":6060")
 	assert.Nil(t, err)
-	httpRedListen := &httpRedirectListener{
+	httpRedListen := &Listener{
 		Listener: ln,
 	}
 	go func() {
@@ -222,7 +222,7 @@ func TestHttpRedirectListener_Accept2(t *testing.T) {
 
 	ln, err := net.Listen("tcp", ":6060")
 	assert.Nil(t, err)
-	httpRedListen := &httpRedirectListener{
+	httpRedListen := &Listener{
 		Listener: ln,
 	}
 	go func() {

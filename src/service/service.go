@@ -29,21 +29,41 @@ func NewService(conf *config.SrvConf) *PlumberSrv {
 }
 
 func (s *PlumberSrv) Run() {
+	if err := s.HandleClientCommands(); err != nil {
+		panic(err)
+	}
+	if err := s.HandleHttpForward(); err != nil {
+		panic(err)
+	}
+}
+
+func (s *PlumberSrv) HandleClientCommands() error {
 	var err error
 	s.listener, err = net.Listen("tcp", s.SrvAddr)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	log.Infof("listen on %s", s.SrvAddr)
 	log.Infof("start to accept connections")
 	log.Debug(common.LocalPrivateIPV4())
-	for {
-		conn, err := s.listener.Accept()
-		if err != nil {
-			panic(err)
+	go func() {
+		for {
+			conn, err := s.listener.Accept()
+			if err != nil {
+				panic(err)
+			}
+			go s.handleConnection(conn)
 		}
-		go s.handleConnection(conn)
+	}()
+	return nil
+}
+
+func (s *PlumberSrv) HandleHttpForward() error {
+	if s.Conf.HttpProxy == nil {
+		return nil
 	}
+
+	return nil
 }
 
 func (s *PlumberSrv) Exit() {

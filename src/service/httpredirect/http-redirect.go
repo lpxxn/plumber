@@ -7,12 +7,12 @@ import (
 	"sync"
 )
 
-type httpRedirectListener struct {
+type Listener struct {
 	net.Listener
 	Router *Router
 }
 
-func (l *httpRedirectListener) Accept() (net.Conn, error) {
+func (l *Listener) Accept() (net.Conn, error) {
 	c, err := l.Listener.Accept()
 	if err != nil {
 		return nil, err
