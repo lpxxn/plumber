@@ -157,7 +157,7 @@ func TestCliConf(t *testing.T) {
 	dec := yaml.NewDecoder(bytes.NewReader(body))
 	tf := func(testFunc func(conf *CliConf)) {
 		cliConf := &CliConf{}
-		err = dec.Decode(cliConf)≠
+		err = dec.Decode(cliConf)
 		assert.Nil(t, err)
 		testFunc(cliConf)
 	}

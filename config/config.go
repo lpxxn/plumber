@@ -1,7 +1,7 @@
 package config
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/lpxxn/plumber/src/log"
@@ -14,7 +14,7 @@ func readFile(filename string) ([]byte, error) {
 		return nil, err
 	}
 	defer f.Close()
-	return ioutil.ReadAll(f)
+	return io.ReadAll(f)
 }
 
 func ReadFile(filename string, v interface{}) error {
