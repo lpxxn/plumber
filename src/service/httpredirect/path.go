@@ -158,7 +158,7 @@ func RoutePatternMatch(path, pattern string) bool {
 }
 
 // ParseRoute analyzes the route and divides it into segments for constant areas and parameters,
-// this information is needed later when assigning the requests to the declared routes
+// this information is needed later when assigning the requests to the declared routesMap
 func ParseRoute(pattern string) routeParser {
 	parser := routeParser{}
 
