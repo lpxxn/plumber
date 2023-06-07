@@ -146,6 +146,9 @@ func TestSrvConf(t *testing.T) {
 	assert.NotEmpty(t, srvConf.TCPAddr)
 	t.Log(srvConf)
 	t.Log(srvConf.HttpProxy)
+	for _, httpProxy := range srvConf.HttpProxy {
+		t.Log(httpProxy)
+	}
 
 }
 

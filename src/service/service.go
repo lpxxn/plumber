@@ -8,6 +8,7 @@ import (
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
+	"github.com/lpxxn/plumber/src/service/httpredirect"
 )
 
 type PlumberSrv struct {
@@ -19,6 +20,16 @@ type PlumberSrv struct {
 
 	isExiting int32
 	Conf      *config.SrvConf
+}
+
+func (s *PlumberSrv) All() []net.Conn {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *PlumberSrv) GetByName(name string) net.Conn {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewService(conf *config.SrvConf) *PlumberSrv {
@@ -59,10 +70,15 @@ func (s *PlumberSrv) HandleClientCommands() error {
 }
 
 func (s *PlumberSrv) HandleHttpForward() error {
-	if s.Conf.HttpProxy == nil {
+	if len(s.Conf.HttpProxy) == 0 {
 		return nil
 	}
-
+	for _, httProxy := range s.Conf.HttpProxy {
+		_, err := httpredirect.NewHttpProxy(s, httProxy)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

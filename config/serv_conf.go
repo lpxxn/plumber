@@ -1,13 +1,16 @@
 package config
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 type SrvConf struct {
 	// Server TCP Port
 	TCPAddr string `yaml:"tcpAddr"`
 	// white list
-	WhiteList []string          `yaml:"whiteList"`
-	HttpProxy *SrvHttpProxyConf `yaml:"httpProxy"`
+	WhiteList []string             `yaml:"whiteList"`
+	HttpProxy SrvHttpProxyConfList `yaml:"httpProxy"`
 }
 
 func NewSrvConf() *SrvConf {
@@ -45,6 +48,21 @@ func (c SrvHttpProxyConf) Validate() error {
 	}
 	for _, forward := range c.Forwards {
 		if err := forward.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c SrvHttpProxyConf) LocalSrvAddress() string {
+	return fmt.Sprintf(":%d", c.Port)
+}
+
+type SrvHttpProxyConfList []*SrvHttpProxyConf
+
+func (s SrvHttpProxyConfList) Validate() error {
+	for _, proxy := range s {
+		if err := proxy.Validate(); err != nil {
 			return err
 		}
 	}

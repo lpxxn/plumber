@@ -12,7 +12,7 @@ type Router struct {
 	routes    []*Route
 	routesMap map[string]*Route
 
-	ForwardHost func() *net.Conn
+	ForwardConn func() (net.Conn, error)
 }
 
 func NewRouter() *Router {
@@ -25,7 +25,7 @@ func NewRouter() *Router {
 type Route struct {
 	OriginPath  string `json:"path"`
 	RouteParser routeParser
-	ForwardHost func() *net.Conn
+	ForwardConn func() (net.Conn, error)
 }
 
 func (r *Router) Add(pathRaw string) (*Route, error) {

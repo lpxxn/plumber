@@ -1,12 +1,12 @@
 tcpAddr: :9870
 
 httpProxy:
-  domain: lpxxn.com
-  port: 8080
-  defaultForwardTo: lpxxn # forward to client which name is lpxxn
-  forwards: # if forwards is empty, then all requests will be forwarded to defaultForwardTo
-    - path: /api/*
-      forwardTo: abc # forward to abc server
-    - path: /order/:orderNO
-      forwardTo: http://127.0.0.1:5432/  # if forwardTo is not empty, then forward to the server which name is forwardTo
+  - domain: lpxxn.com
+    port: 8080
+    defaultForwardTo: lpxxn # forward to client which name is lpxxn
+    forwards: # if forwards is empty, then all requests will be forwarded to defaultForwardTo
+      - path: /api/*
+        forwardTo: abc # forward to abc server
+      - path: /order/:orderNO
+        forwardTo: http://127.0.0.1:5432/  # if forwardTo is not empty, then forward to the server which name is forwardTo
 
