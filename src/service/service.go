@@ -17,25 +17,21 @@ type PlumberSrv struct {
 	subCons  sync.Map
 	// tcp listener map[localPort]listener
 	TcpListenerMap map[int]net.Listener
-
-	isExiting int32
-	Conf      *config.SrvConf
-}
-
-func (s *PlumberSrv) All() []net.Conn {
-	//TODO implement me
-	panic("implement me")
+	// http proxy remote client conn map[name]conn
+	HttpProxyClientConn map[string]net.Conn
+	isExiting           int32
+	Conf                *config.SrvConf
 }
 
 func (s *PlumberSrv) GetByName(name string) net.Conn {
-	//TODO implement me
-	panic("implement me")
+	return s.HttpProxyClientConn[name]
 }
 
 func NewService(conf *config.SrvConf) *PlumberSrv {
 	return &PlumberSrv{
-		SrvAddr: conf.TCPAddr,
-		Conf:    conf,
+		SrvAddr:             conf.TCPAddr,
+		HttpProxyClientConn: make(map[string]net.Conn),
+		Conf:                conf,
 	}
 }
 

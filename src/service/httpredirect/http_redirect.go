@@ -13,7 +13,6 @@ import (
 )
 
 type ClientConnections interface {
-	All() []net.Conn
 	GetByName(name string) net.Conn
 }
 

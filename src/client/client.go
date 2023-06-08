@@ -17,10 +17,11 @@ type Client struct {
 	exitChan chan bool
 	Conn     *Conn
 
-	sshProxy *SSHProxy
-	Conf     *config.CliConf
-	exist    uint32
-	close    uint32
+	sshProxy  *SSHProxy
+	httpProxy *HttpProxy
+	Conf      *config.CliConf
+	exist     uint32
+	close     uint32
 }
 
 func NewClient(conf *config.CliConf) *Client {
@@ -158,9 +159,8 @@ func (c *Client) sendIdentify() error {
 	// host name
 	localIP, _ := common.LocalPrivateIPV4()
 	identity := &protocol.Identify{
-		Hostname:   common.GetHostname(),
-		ClientName: c.Conf.Name,
-		LocalIP:    localIP.String(),
+		Hostname: common.GetHostname(),
+		LocalIP:  localIP.String(),
 	}
 	cmd, err := protocol.IdentifyCmd(identity)
 	if err != nil {

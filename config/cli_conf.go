@@ -7,7 +7,6 @@ import (
 )
 
 type CliConf struct {
-	Name              string               `yaml:"name,required"`
 	SrvTCPAddr        string               `yaml:"srvTcpAddr"`
 	SrvIP             string               `yaml:"-"`
 	SSH               *SSHConf             `yaml:"ssh"`
@@ -22,14 +21,7 @@ type SSHConf struct {
 	ReConnTimes  int      `yaml:"reConnTimes"`
 }
 
-type ClientHttpProxyConf struct {
-	LocalHttpSrvPort int `yaml:"LocalHttpSrvPort"`
-}
-
 func (c *CliConf) Validate() error {
-	if c.Name == "" {
-		return errors.New("name is empty")
-	}
 	if c.SrvTCPAddr == "" {
 		return errors.New("srvTcpAddr is empty")
 	}
@@ -42,7 +34,14 @@ func (c *CliConf) Validate() error {
 		c.ReConnectionTimes = -1
 	}
 	if c.SSH != nil {
-		return c.SSH.Validate()
+		if err := c.SSH.Validate(); err != nil {
+			return err
+		}
+	}
+	if c.HttpProxy != nil {
+		if err := c.HttpProxy.Validate(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -63,4 +62,20 @@ func (s *SSHConf) Validate() error {
 
 func NewCliConf() *CliConf {
 	return &CliConf{}
+}
+
+type ClientHttpProxyConf struct {
+	UID          string `json:"uid"`
+	LocalSrvAddr string `json:"localSrvAddr"`
+}
+
+func (c *ClientHttpProxyConf) Validate() error {
+	if c.UID == "" {
+		return errors.New("uid is empty")
+	}
+	if c.LocalSrvAddr == "" {
+		return errors.New("localSrvAddr is empty")
+	}
+	_, err := common.TcpAddr(c.LocalSrvAddr)
+	return err
 }

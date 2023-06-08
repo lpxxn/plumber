@@ -1,0 +1,4 @@
+srvTcpAddr: 127.0.0.1:9870
+http:
+  uid: lpxxn-h1
+  localSrvAddr: 127.0.0.1:7654

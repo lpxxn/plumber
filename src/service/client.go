@@ -71,7 +71,7 @@ func (c *client) startSSHProxy() error {
 	if err := c.sshProxy.WaitForTunnelConn(); err != nil {
 		return err
 	}
-	session, err := yamux.Server(c.sshProxy.RemoteTunnelConn, nil)
+	session, err := yamux.Client(c.sshProxy.RemoteTunnelConn, nil)
 	if err != nil {
 		panic(err)
 	}
