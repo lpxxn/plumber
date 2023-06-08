@@ -13,12 +13,14 @@ import (
 )
 
 const (
-	MagicString    = "GoV1"
-	SSHMagicString = "SSHV1"
+	MagicString     = "GoV1"
+	SSHMagicString  = "SSHV1"
+	HttpMagicString = "HTTPV1"
 )
 
 var MagicBytes = []byte(MagicString)
 var SSHMagicBytes = []byte(SSHMagicString)
+var HttpMagicBytes = []byte(HttpMagicString)
 
 var SeparatorBytes = []byte(" ")
 var NewLineByte = byte('\n')

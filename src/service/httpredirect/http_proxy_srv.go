@@ -9,44 +9,41 @@ import (
 	"sync"
 
 	"github.com/lpxxn/plumber/config"
+	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
 )
 
-type ClientConnections interface {
-	GetByName(name string) net.Conn
-}
-
-func NewHttpProxy(clientConnections ClientConnections, conf *config.SrvHttpProxyConf) (*Listener, error) {
+func NewHttpProxy(conf *config.SrvHttpProxyConf) (*HttpProxySrv, error) {
 	ln, err := net.Listen("tcp", conf.LocalSrvAddress())
 	if err != nil {
 		return nil, err
 	}
-	var listener = &Listener{
-		Listener:          ln,
-		Router:            nil,
-		Conf:              conf,
-		ClientConnections: clientConnections,
+	var srv = &HttpProxySrv{
+		Listener:               ln,
+		Router:                 nil,
+		Conf:                   conf,
+		HttpProxyClientConnMap: make(map[string]net.Conn),
 	}
 	if conf.DefaultForwardTo != "" {
-		listener.DefaultForwardConn = listener.ForwardConn(conf.DefaultForwardTo)
+		srv.DefaultForwardConn = srv.ForwardConn(conf.DefaultForwardTo)
 	}
-	listener.Router, err = listener.ParseRouter(conf)
+	srv.Router, err = srv.ParseRouter(conf)
 	if err != nil {
 		return nil, err
 	}
-	go listener.Handle()
-	return listener, nil
+	go srv.Handle()
+	return srv, nil
 }
 
-type Listener struct {
+type HttpProxySrv struct {
 	net.Listener
-	Router             *Router
-	Conf               *config.SrvHttpProxyConf
-	ClientConnections  ClientConnections
-	DefaultForwardConn func() (net.Conn, error)
+	Router                 *Router
+	Conf                   *config.SrvHttpProxyConf
+	DefaultForwardConn     func() (net.Conn, error)
+	HttpProxyClientConnMap map[string]net.Conn
 }
 
-func (l *Listener) ParseRouter(conf *config.SrvHttpProxyConf) (*Router, error) {
+func (l *HttpProxySrv) ParseRouter(conf *config.SrvHttpProxyConf) (*Router, error) {
 	router := NewRouter()
 	for _, item := range conf.Forwards {
 		router.Add(item.Path)
@@ -57,16 +54,16 @@ func (l *Listener) ParseRouter(conf *config.SrvHttpProxyConf) (*Router, error) {
 	return router, nil
 }
 
-func (l *Listener) ForwardConn(addr string) func() (net.Conn, error) {
+func (l *HttpProxySrv) ForwardConn(addr string) func() (net.Conn, error) {
 	return func() (net.Conn, error) {
-		if conn := l.ClientConnections.GetByName(addr); conn != nil {
+		if conn, ok := l.HttpProxyClientConnMap[addr]; ok {
 			return conn, nil
 		}
 		return net.Dial("tcp", addr)
 	}
 }
 
-func (l *Listener) Handle() {
+func (l *HttpProxySrv) Handle() {
 	for {
 		conn, err := l.Accept()
 		if err != nil {
@@ -103,7 +100,7 @@ func (l *Listener) Handle() {
 	}
 }
 
-func (l *Listener) ConnByRouter(r *Route) (net.Conn, error) {
+func (l *HttpProxySrv) ConnByRouter(r *Route) (net.Conn, error) {
 	if r == nil {
 		if l.DefaultForwardConn == nil {
 			log.Errorf("no route matched and no default forward conn")
@@ -119,7 +116,7 @@ func (l *Listener) ConnByRouter(r *Route) (net.Conn, error) {
 	return r.ForwardConn()
 }
 
-func (l *Listener) Accept() (net.Conn, error) {
+func (l *HttpProxySrv) Accept() (net.Conn, error) {
 	c, err := l.Listener.Accept()
 	if err != nil {
 		return nil, err
@@ -160,6 +157,24 @@ func (c *httpRedirectConn) CheckIsHttp() bool {
 	}
 
 	return true
+}
+
+func (c *httpRedirectConn) CheckReadRemoteClient() (bool, error) {
+	firstBytes, err := c.r.Peek(len(common.HttpMagicBytes))
+	if err != nil {
+		return false, nil
+	}
+
+	if string(firstBytes) != common.HttpMagicString {
+		return false, nil
+	}
+	r := make([]byte, len(common.HttpMagicBytes))
+	_, err = c.Read(r)
+	if err != nil {
+		return false, err
+	}
+	log.Infof("client conn magic: %s", string(r))
+	return true, nil
 }
 
 func firstBytesLookLikeHTTP(hdr []byte) bool {

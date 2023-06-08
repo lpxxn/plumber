@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lpxxn/plumber/src/common"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -165,7 +166,7 @@ func TestHttpRedirectListener_Accept(t *testing.T) {
 
 	ln, err := net.Listen("tcp", ":6060")
 	assert.Nil(t, err)
-	httpRedListen := &Listener{
+	httpRedListen := &HttpProxySrv{
 		Listener: ln,
 	}
 	go func() {
@@ -222,33 +223,49 @@ func TestHttpRedirectListener_Accept2(t *testing.T) {
 
 	ln, err := net.Listen("tcp", ":6060")
 	assert.Nil(t, err)
-	httpRedListen := &Listener{
+	httpRedListen := &HttpProxySrv{
 		Listener: ln,
 	}
 	go func() {
-		conn, err := httpRedListen.Accept()
-		assert.Nil(t, err)
-		assert.NotNil(t, conn)
+		for {
+			conn, err := httpRedListen.Accept()
+			assert.Nil(t, err)
+			assert.NotNil(t, conn)
+			go func(conn net.Conn) {
+				hc, ok := conn.(*httpRedirectConn)
+				if !ok {
+					t.Logf("is http request: %t", hc.CheckIsHttp())
+					return
+				}
 
-		hc, ok := conn.(*httpRedirectConn)
-		if !ok {
-			t.Logf("is http request: %t", hc.CheckIsHttp())
-			return
+				if isClient, err := hc.CheckReadRemoteClient(); isClient {
+					t.Logf("is client %s", hc.LocalAddr())
+
+					_, err = hc.Write([]byte("hello"))
+
+					assert.Nil(t, err)
+					return
+				} else if err != nil {
+					t.Errorf("is client: %t, err: %v", isClient, err)
+				}
+
+				req, err := hc.GetHttpRequest()
+				assert.Nil(t, err)
+				t.Logf("url: %s", req.URL.String())
+
+				dialer := &net.Dialer{
+					Timeout: time.Duration(time.Second * 30),
+				}
+				forwardCon, err := dialer.Dial("tcp", ":5679")
+				assert.Nil(t, err)
+				err = req.Write(forwardCon)
+				assert.Nil(t, err)
+
+				_, err = io.Copy(conn, forwardCon)
+				assert.Nil(t, err)
+			}(conn)
 		}
-		req, err := hc.GetHttpRequest()
-		assert.Nil(t, err)
-		t.Logf("url: %s", req.URL.String())
 
-		dialer := &net.Dialer{
-			Timeout: time.Duration(time.Second * 30),
-		}
-		forwardCon, err := dialer.Dial("tcp", ":5679")
-		assert.Nil(t, err)
-		err = req.Write(forwardCon)
-		assert.Nil(t, err)
-
-		_, err = io.Copy(conn, forwardCon)
-		assert.Nil(t, err)
 	}()
 
 	time.Sleep(time.Second)
@@ -264,4 +281,14 @@ func TestHttpRedirectListener_Accept2(t *testing.T) {
 	t.Logf("resp: %+v", resp)
 	t.Logf("header: %+v", resp.Header)
 	t.Logf("body: %+v", body)
+
+	// check tcp
+	conn, err := net.Dial("tcp", ":6060")
+	assert.Nil(t, err)
+	_, err = conn.Write(common.HttpMagicBytes)
+	assert.Nil(t, err)
+	buf := make([]byte, 5)
+	_, err = conn.Read(buf)
+	assert.Nil(t, err)
+	t.Logf("tcp resp: %s", string(buf))
 }
