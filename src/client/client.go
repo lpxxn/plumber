@@ -62,6 +62,11 @@ func (c *Client) DryRun() error {
 			return err
 		}
 	}
+	if c.httpProxy != nil {
+		if err := c.httpProxy.DryRun(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

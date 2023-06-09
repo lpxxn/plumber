@@ -260,9 +260,13 @@ func TestHttpRedirectListener_Accept2(t *testing.T) {
 				assert.Nil(t, err)
 				err = req.Write(forwardCon)
 				assert.Nil(t, err)
-
-				_, err = io.Copy(conn, forwardCon)
+				//_, err = io.Copy(conn, forwardCon)
+				//assert.Nil(t, err)
+				resp, err := http.ReadResponse(bufio.NewReader(forwardCon), req)
 				assert.Nil(t, err)
+				err = resp.Write(conn)
+				assert.Nil(t, err)
+
 			}(conn)
 		}
 
