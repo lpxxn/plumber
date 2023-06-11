@@ -269,7 +269,6 @@ func TestHttpRedirectListener_Accept2(t *testing.T) {
 
 			}(conn)
 		}
-
 	}()
 
 	time.Sleep(time.Second)
