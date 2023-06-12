@@ -65,11 +65,15 @@ func NewCliConf() *CliConf {
 }
 
 type ClientHttpProxyConf struct {
+	RemotePort   int32  `json:"remotePort"`
 	UID          string `json:"uid"`
 	LocalSrvAddr string `json:"localSrvAddr"`
 }
 
 func (c *ClientHttpProxyConf) Validate() error {
+	if c.RemotePort <= 0 {
+		return errors.New("remotePort is empty")
+	}
 	if c.UID == "" {
 		return errors.New("uid is empty")
 	}

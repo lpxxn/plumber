@@ -63,7 +63,7 @@ func (s *PlumberSrv) HandleHttpForward() error {
 		return nil
 	}
 	for _, httProxy := range s.Conf.HttpProxy {
-		_, err := httpredirect.NewHttpProxy(s, httProxy)
+		_, err := httpredirect.NewHttpProxy(httProxy)
 		if err != nil {
 			return err
 		}

@@ -115,6 +115,14 @@ func SSHProxyCmd(s *config.SSHConf) (*Command, error) {
 	return &Command{Type: SSHProxyCommand, Body: body}, nil
 }
 
+func HttpProxyCmd(s *config.ClientHttpProxyConf) (*Command, error) {
+	body, err := json.Marshal(s)
+	if err != nil {
+		return nil, err
+	}
+	return &Command{Type: HttpProxyCommand, Body: body}, nil
+}
+
 func PingCmd() *Command {
 	return &Command{Type: PingCommand}
 }

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"net"
 	"sync/atomic"
 	"time"
@@ -183,6 +184,30 @@ func (c *Client) ping() error {
 		return err
 	}
 	return c.Conn.Flush()
+}
+
+func (c *Client) HandleHttpProxy() error {
+	if c.Conf.HttpProxy == nil {
+		return nil
+	}
+	log.Infof("start http proxy")
+	httpConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", c.Conf.SrvIP, c.Conf.HttpProxy.RemotePort))
+	if err != nil {
+		log.Errorf("connect to http proxy failed: %s", err.Error())
+		return err
+	}
+	httpCmd, err := protocol.HttpProxyCmd(c.Conf.HttpProxy)
+	if err != nil {
+		log.Errorf("create http proxy cmd failed: %s", err.Error())
+		return err
+	}
+	_, err = httpCmd.Write(httpConn)
+	if err != nil {
+		log.Errorf("send http proxy cmd failed: %s", err.Error())
+		return err
+	}
+
+	return nil
 }
 
 // begin to handle ssh proxy
