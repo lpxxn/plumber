@@ -107,7 +107,7 @@ func (l *HttpProxySrv) Handle() {
 					return
 				}
 
-				l.HttpProxyClientConnMap[hc.RemoteAddr().String()] = hc
+				l.AddClient(identity, hc)
 				return
 			} else if err != nil {
 				log.Errorf("is client: %t, err: %v", isClient, err)

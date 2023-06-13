@@ -36,7 +36,7 @@ func main() {
 	}
 	// exit signal
 	log.Info("cli ruing....")
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt)
 	select {
 	case <-cli.GetExitChan():
