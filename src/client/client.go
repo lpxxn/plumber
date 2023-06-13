@@ -196,6 +196,11 @@ func (c *Client) HandleHttpProxy() error {
 		log.Errorf("connect to http proxy failed: %s", err.Error())
 		return err
 	}
+	_, err = httpConn.Write(common.HttpMagicBytes)
+	if err != nil {
+		log.Errorf("send http magic bytes failed: %s", err.Error())
+		return err
+	}
 	httpCmd, err := protocol.HttpProxyCmd(c.Conf.HttpProxy)
 	if err != nil {
 		log.Errorf("create http proxy cmd failed: %s", err.Error())

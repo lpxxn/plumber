@@ -64,7 +64,7 @@ func NewCommand(cmdType CommandType, params [][]byte, body []byte) *Command {
 
 var ErrInvalidCommand = errors.New("invalid command")
 
-func ReadIdentifyCommand(params [][]byte, r io.Reader) (*Identify, error) {
+func ReadIdentifyCommand(r io.Reader) (*Identify, error) {
 	body, err := ReadCommandData(r)
 	if err != nil {
 		return nil, err

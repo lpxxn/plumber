@@ -11,6 +11,7 @@ import (
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
+	"github.com/lpxxn/plumber/src/protocol"
 )
 
 func NewHttpProxy(conf *config.SrvHttpProxyConf) (*HttpProxySrv, error) {
@@ -41,6 +42,27 @@ type HttpProxySrv struct {
 	Conf                   *config.SrvHttpProxyConf
 	DefaultForwardConn     func() (net.Conn, error)
 	HttpProxyClientConnMap map[string]net.Conn
+	// lock
+	lock sync.Mutex
+}
+
+func (l *HttpProxySrv) AddClient(identity *protocol.Identify, conn net.Conn) error {
+	// use lock to avoid concurrent map write
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	if _, ok := l.HttpProxyClientConnMap[identity.UID]; ok {
+		log.Infof("client %s already exists", identity.UID)
+		return errors.New("client already exists")
+	}
+	l.HttpProxyClientConnMap[identity.UID] = conn
+	return nil
+}
+
+func (l *HttpProxySrv) GetClient(uid string) (net.Conn, bool) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
+	conn, ok := l.HttpProxyClientConnMap[uid]
+	return conn, ok
 }
 
 func (l *HttpProxySrv) ParseRouter(conf *config.SrvHttpProxyConf) (*Router, error) {
@@ -56,7 +78,7 @@ func (l *HttpProxySrv) ParseRouter(conf *config.SrvHttpProxyConf) (*Router, erro
 
 func (l *HttpProxySrv) ForwardConn(addr string) func() (net.Conn, error) {
 	return func() (net.Conn, error) {
-		if conn, ok := l.HttpProxyClientConnMap[addr]; ok {
+		if conn, ok := l.GetClient(addr); ok {
 			return conn, nil
 		}
 		return net.Dial("tcp", addr)
@@ -78,6 +100,13 @@ func (l *HttpProxySrv) Handle() {
 			}
 			if isClient, err := hc.CheckReadRemoteClient(); isClient {
 				log.Infof("is client %s", hc.RemoteAddr())
+
+				identity, err := protocol.ReadIdentifyCommand(hc)
+				if err != nil {
+					log.Errorf("read identify command error: %s", err.Error())
+					return
+				}
+
 				l.HttpProxyClientConnMap[hc.RemoteAddr().String()] = hc
 				return
 			} else if err != nil {
