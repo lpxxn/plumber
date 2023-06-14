@@ -3,7 +3,6 @@ package httpredirect
 import (
 	"bufio"
 	"errors"
-	"io"
 	"net"
 	"net/http"
 	"sync"
@@ -107,7 +106,10 @@ func (l *HttpProxySrv) Handle() {
 					return
 				}
 
-				l.AddClient(identity, hc)
+				if err := l.AddClient(identity, hc); err != nil {
+					log.Errorf("add client error: %s", err.Error())
+					return
+				}
 				return
 			} else if err != nil {
 				log.Errorf("is client: %t, err: %v", isClient, err)
@@ -130,7 +132,7 @@ func (l *HttpProxySrv) Handle() {
 				log.Errorf("write http request error: %s", err.Error())
 				return
 			}
-			if _, err = io.Copy(conn, forwardConn); err != nil {
+			if _, err = http.ReadResponse(bufio.NewReader(forwardConn), req); err != nil {
 				log.Errorf("copy error: %s", err.Error())
 				return
 			}
