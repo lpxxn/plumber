@@ -10,7 +10,7 @@ type CliConf struct {
 	SrvTCPAddr        string               `yaml:"srvTcpAddr"`
 	SrvIP             string               `yaml:"-"`
 	SSH               *SSHConf             `yaml:"ssh"`
-	HttpProxy         *ClientHttpProxyConf `yaml:"httpProxy"`
+	HttpProxy         *ClientHttpProxyConf `yaml:"http"`
 	ReConnectionTimes int32                `yaml:"reConnectionTimes"`
 }
 
@@ -65,9 +65,9 @@ func NewCliConf() *CliConf {
 }
 
 type ClientHttpProxyConf struct {
-	RemotePort   int32  `json:"remotePort"`
-	UID          string `json:"uid"`
-	LocalSrvAddr string `json:"localSrvAddr"`
+	RemotePort   int32  `yaml:"remotePort"`
+	UID          string `yaml:"uid"`
+	LocalSrvAddr string `yaml:"localSrvAddr"`
 }
 
 func (c *ClientHttpProxyConf) Validate() error {

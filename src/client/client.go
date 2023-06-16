@@ -1,7 +1,6 @@
 package client
 
 import (
-	"fmt"
 	"net"
 	"sync/atomic"
 	"time"
@@ -105,7 +104,10 @@ func (c *Client) run() error {
 			log.Errorf("handle ssh proxy failed: %s", err.Error())
 			goto exit
 		}
-
+		if err := c.HandleHttpProxy(); err != nil {
+			log.Errorf("handle http proxy failed: %s", err.Error())
+			goto exit
+		}
 		// session
 		NewCliProtocol(c).IOLoop()
 		reConnFun()
@@ -147,6 +149,7 @@ func (c *Client) connectToSrv() (net.Conn, error) {
 		KeepAlive: 15 * time.Second,
 	}
 	conn, err := dialer.Dial("tcp", c.Conf.SrvTCPAddr)
+	log.Infof("connect to server(%s)", c.Conf.SrvTCPAddr)
 	if err != nil {
 		if ne, ok := err.(net.Error); ok && ne.Timeout() {
 			log.Errorf("connect to server(%s) timeout: %s", c.Conf.SrvTCPAddr, err.Error())
@@ -190,28 +193,14 @@ func (c *Client) HandleHttpProxy() error {
 	if c.Conf.HttpProxy == nil {
 		return nil
 	}
-	log.Infof("start http proxy")
-	httpConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", c.Conf.SrvIP, c.Conf.HttpProxy.RemotePort))
-	if err != nil {
-		log.Errorf("connect to http proxy failed: %s", err.Error())
-		return err
-	}
-	_, err = httpConn.Write(common.HttpMagicBytes)
-	if err != nil {
-		log.Errorf("send http magic bytes failed: %s", err.Error())
-		return err
-	}
-	httpCmd, err := protocol.HttpProxyCmd(c.Conf.HttpProxy)
-	if err != nil {
-		log.Errorf("create http proxy cmd failed: %s", err.Error())
-		return err
-	}
-	_, err = httpCmd.Write(httpConn)
-	if err != nil {
-		log.Errorf("send http proxy cmd failed: %s", err.Error())
-		return err
-	}
+	httpProxy := NewHttpProxy(c.Conf.SrvIP, c.Conf.HttpProxy)
 
+	if err := httpProxy.InitConn(); err != nil {
+		log.Errorf("init http proxy failed: %s", err.Error())
+		return err
+	}
+	log.Infof("start http proxy")
+	c.httpProxy = httpProxy
 	return nil
 }
 

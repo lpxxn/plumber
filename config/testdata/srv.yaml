@@ -2,8 +2,8 @@ tcpAddr: :9870
 
 httpProxy:
   - domain: lpxxn.com
-    port: 8080
-    defaultForwardTo: lpxxn # forward to client which name is lpxxn
+    port: 9190
+    defaultForwardTo: lpxxn # forward to client which uuid is lpxxn
     forwards: # if forwards is empty, then all requests will be forwarded to defaultForwardTo
       - path: /api/*
         forwardTo: abc # forward to abc server

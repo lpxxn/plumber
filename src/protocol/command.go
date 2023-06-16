@@ -123,6 +123,15 @@ func HttpProxyCmd(s *config.ClientHttpProxyConf) (*Command, error) {
 	return &Command{Type: HttpProxyCommand, Body: body}, nil
 }
 
+func ReadClientHttpProxyCmd(r io.Reader) (*config.ClientHttpProxyConf, error) {
+	body, err := ReadCommandData(r)
+	if err != nil {
+		return nil, err
+	}
+	httpConf := &config.ClientHttpProxyConf{}
+	return httpConf, json.Unmarshal(body, httpConf)
+}
+
 func PingCmd() *Command {
 	return &Command{Type: PingCommand}
 }

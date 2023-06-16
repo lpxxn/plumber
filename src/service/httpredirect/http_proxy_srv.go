@@ -18,6 +18,7 @@ func NewHttpProxy(conf *config.SrvHttpProxyConf) (*HttpProxySrv, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Infof("http proxy listen on %s", conf.LocalSrvAddress())
 	var srv = &HttpProxySrv{
 		Listener:               ln,
 		Router:                 nil,
@@ -45,7 +46,7 @@ type HttpProxySrv struct {
 	lock sync.Mutex
 }
 
-func (l *HttpProxySrv) AddClient(identity *protocol.Identify, conn net.Conn) error {
+func (l *HttpProxySrv) AddClient(identity *config.ClientHttpProxyConf, conn net.Conn) error {
 	// use lock to avoid concurrent map write
 	l.lock.Lock()
 	defer l.lock.Unlock()
@@ -53,6 +54,7 @@ func (l *HttpProxySrv) AddClient(identity *protocol.Identify, conn net.Conn) err
 		log.Infof("client %s already exists", identity.UID)
 		return errors.New("client already exists")
 	}
+	log.Infof("add client %s", identity.UID)
 	l.HttpProxyClientConnMap[identity.UID] = conn
 	return nil
 }
@@ -100,9 +102,9 @@ func (l *HttpProxySrv) Handle() {
 			if isClient, err := hc.CheckReadRemoteClient(); isClient {
 				log.Infof("is client %s", hc.RemoteAddr())
 
-				identity, err := protocol.ReadIdentifyCommand(hc)
+				identity, err := protocol.ReadClientHttpProxyCmd(hc)
 				if err != nil {
-					log.Errorf("read identify command error: %s", err.Error())
+					log.Errorf("read httpProxy command error: %s", err.Error())
 					return
 				}
 
@@ -213,7 +215,7 @@ func (c *httpRedirectConn) CheckReadRemoteClient() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	log.Infof("client conn magic: %s", string(r))
+	log.Infof("httpproxy client conn magic: %s", string(r))
 	return true, nil
 }
 

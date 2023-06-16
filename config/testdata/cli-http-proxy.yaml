@@ -1,5 +1,5 @@
 srvTcpAddr: 127.0.0.1:9870
 http:
-  remotePort: 8080 # remote port, same as server config port
-  uid: lpxxn-h1
+  remotePort: 9190 # remote port, same as server config port
+  uid: lpxxn
   localSrvAddr: 127.0.0.1:7654

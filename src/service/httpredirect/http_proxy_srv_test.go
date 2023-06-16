@@ -204,6 +204,28 @@ func TestHttpRedirectListener_Accept(t *testing.T) {
 	t.Logf("body: %+v", body)
 }
 
+type TestHandler2 struct {
+	t *testing.T
+}
+
+func (t TestHandler2) ServeHTTP(w http.ResponseWriter, request *http.Request) {
+	type rev struct {
+		Name string
+		Age  int
+	}
+	t.t.Logf("header: %+v", request.Header)
+	w.Header().Set("my-header", "my-header-value")
+	w.WriteHeader(http.StatusOK)
+	body, _ := json.Marshal(rev{Name: "test", Age: 18})
+	t.t.Log("=========")
+	w.Write(body)
+}
+
+// curl http://127.0.0.1:7654/abc
+func TestNewWeb1(t *testing.T) {
+	http.ListenAndServe(":7654", &TestHandler2{t: t})
+}
+
 func TestHttpRedirectListener_Accept2(t *testing.T) {
 	type rev struct {
 		Name string

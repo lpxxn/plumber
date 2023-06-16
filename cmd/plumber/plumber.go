@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"os"
+	"os/signal"
 
 	"github.com/lpxxn/plumber/config"
-	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
 	"github.com/lpxxn/plumber/src/service"
 )
@@ -33,11 +33,14 @@ func main() {
 	}
 	log.Debugf("config: %+v", *srvConf)
 	srv := service.NewService(srvConf)
-	wg := &common.WaitGroup{}
-	wg.WaitFunc(func() {
-		srv.Run()
-	})
-	wg.Wait()
+	srv.Run()
+	// exit signal
+	log.Info("service ruing....")
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt)
+	select {
+	case <-ch:
+	}
 }
 
 func NewFlags() *flag.FlagSet {

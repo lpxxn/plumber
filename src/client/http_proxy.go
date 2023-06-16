@@ -1,17 +1,21 @@
 package client
 
 import (
+	"fmt"
 	"net"
 
 	"github.com/lpxxn/plumber/config"
+	"github.com/lpxxn/plumber/src/common"
 	"github.com/lpxxn/plumber/src/log"
+	"github.com/lpxxn/plumber/src/protocol"
 )
 
 type HttpProxy struct {
 	Conf *config.ClientHttpProxyConf
 
-	HttpProxyConn net.Conn
-	ServIP        string
+	HttpProxyConn   net.Conn
+	ForwardHttpConn net.Conn
+	ServIP          string
 }
 
 func NewHttpProxy(servIP string, conf *config.ClientHttpProxyConf) *HttpProxy {
@@ -19,6 +23,18 @@ func NewHttpProxy(servIP string, conf *config.ClientHttpProxyConf) *HttpProxy {
 		ServIP: servIP,
 		Conf:   conf,
 	}
+}
+
+func (h *HttpProxy) InitConn() error {
+	localHttpProxyConn, err := h.ConnForwardHttpSrv()
+	if err != nil {
+		return err
+	}
+	if err := h.ConnRemoteSrv(); err != nil {
+		return err
+	}
+	h.ForwardHttpConn = localHttpProxyConn
+	return nil
 }
 
 func (h *HttpProxy) Close() error {
@@ -39,6 +55,32 @@ func (h *HttpProxy) testConnection() error {
 		return err
 	}
 	defer localHttpProxyConn.Close()
+	return nil
+}
+
+func (h *HttpProxy) ConnRemoteSrv() error {
+	httpConn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", h.ServIP, h.Conf.RemotePort))
+	if err != nil {
+		log.Errorf("connect to http proxy failed: %s", err.Error())
+		return err
+	}
+	_, err = httpConn.Write(common.HttpMagicBytes)
+	if err != nil {
+		log.Errorf("send http magic bytes failed: %s", err.Error())
+		return err
+	}
+	httpCmd, err := protocol.HttpProxyCmd(h.Conf)
+	if err != nil {
+		log.Errorf("create http proxy cmd failed: %s", err.Error())
+		return err
+	}
+	_, err = httpCmd.Write(httpConn)
+	if err != nil {
+		log.Errorf("send http proxy cmd failed: %s", err.Error())
+		return err
+	}
+
+	h.HttpProxyConn = httpConn
 	return nil
 }
 
