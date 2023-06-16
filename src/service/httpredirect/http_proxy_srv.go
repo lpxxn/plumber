@@ -101,7 +101,12 @@ func (l *HttpProxySrv) Handle() {
 			}
 			if isClient, err := hc.CheckReadRemoteClient(); isClient {
 				log.Infof("is client %s", hc.RemoteAddr())
-
+				cmdType, header, err := protocol.ReadCmdHeader(hc.r)
+				if err != nil {
+					log.Errorf("read cmd header error: %s", err.Error())
+					return
+				}
+				log.Infof("cmdType: %s, header: %s", cmdType, header)
 				identity, err := protocol.ReadClientHttpProxyCmd(hc)
 				if err != nil {
 					log.Errorf("read httpProxy command error: %s", err.Error())
@@ -134,8 +139,14 @@ func (l *HttpProxySrv) Handle() {
 				log.Errorf("write http request error: %s", err.Error())
 				return
 			}
-			if _, err = http.ReadResponse(bufio.NewReader(forwardConn), req); err != nil {
+			resp, err := http.ReadResponse(bufio.NewReader(forwardConn), req)
+			if err != nil {
 				log.Errorf("copy error: %s", err.Error())
+				return
+			}
+
+			if err := resp.Write(hc); err != nil {
+				log.Errorf("write http response error: %s", err.Error())
 				return
 			}
 		}(conn)

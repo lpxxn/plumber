@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/lpxxn/plumber/src/common"
+	"github.com/lpxxn/plumber/src/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -209,6 +210,7 @@ type TestHandler2 struct {
 }
 
 func (t TestHandler2) ServeHTTP(w http.ResponseWriter, request *http.Request) {
+	log.Info("request: %+v  --------", request)
 	type rev struct {
 		Name string
 		Age  int

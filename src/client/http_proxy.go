@@ -34,6 +34,8 @@ func (h *HttpProxy) InitConn() error {
 		return err
 	}
 	h.ForwardHttpConn = localHttpProxyConn
+	go common.CopyDate(h.HttpProxyConn, h.ForwardHttpConn)
+	go common.CopyDate(h.ForwardHttpConn, h.HttpProxyConn)
 	return nil
 }
 

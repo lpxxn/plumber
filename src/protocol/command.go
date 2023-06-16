@@ -1,13 +1,17 @@
 package protocol
 
 import (
+	"bufio"
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/lpxxn/plumber/config"
 	"github.com/lpxxn/plumber/src/common"
+	"github.com/lpxxn/plumber/src/log"
 )
 
 type Command struct {
@@ -130,6 +134,28 @@ func ReadClientHttpProxyCmd(r io.Reader) (*config.ClientHttpProxyConf, error) {
 	}
 	httpConf := &config.ClientHttpProxyConf{}
 	return httpConf, json.Unmarshal(body, httpConf)
+}
+
+func ReadCmdHeader(r *bufio.Reader) (CommandType, []byte, error) {
+	header, err := r.ReadSlice(common.NewLineByte)
+	if err != nil {
+		log.Errorf("failed to read command - %s", err)
+		if err == io.EOF {
+			err = nil
+		} else {
+			err = fmt.Errorf("failed to read command - %s", err)
+		}
+		return 0, nil, err
+	}
+	// trim \n
+	header = header[:len(header)-1]
+	params := bytes.Split(header, common.SeparatorBytes)
+	cmdType, err := BytesToCommand(params[0])
+	if err != nil {
+		log.Errorf("invalid command - %s params: %v", err, params)
+		return 0, nil, err
+	}
+	return cmdType, header, nil
 }
 
 func PingCmd() *Command {
