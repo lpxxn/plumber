@@ -3,8 +3,11 @@ package httpredirect
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/lpxxn/plumber/config"
@@ -69,9 +72,12 @@ func (l *HttpProxySrv) GetClient(uid string) (net.Conn, bool) {
 func (l *HttpProxySrv) ParseRouter(conf *config.SrvHttpProxyConf) (*Router, error) {
 	router := NewRouter()
 	for _, item := range conf.Forwards {
-		router.Add(item.Path)
+		route, err := router.Add(item.Path)
+		if err != nil {
+			return nil, err
+		}
 		if item.ForwardTo != "" {
-			router.ForwardConn = l.ForwardConn(item.ForwardTo)
+			route.ForwardConn = l.ForwardConn(item.ForwardTo)
 		}
 	}
 	return router, nil
@@ -82,8 +88,20 @@ func (l *HttpProxySrv) ForwardConn(addr string) func() (net.Conn, error) {
 		if conn, ok := l.GetClient(addr); ok {
 			return conn, nil
 		}
+		if strings.HasPrefix(addr, "http://") || strings.HasPrefix(addr, "https://") {
+			return DialHttpProxy(addr)
+		}
 		return net.Dial("tcp", addr)
 	}
+}
+
+func DialHttpProxy(rawURL string) (net.Conn, error) {
+	// extract host and port from rawURL
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, err
+	}
+	return net.Dial("tcp", fmt.Sprintf("%s:%s", u.Hostname(), u.Port()))
 }
 
 func (l *HttpProxySrv) Handle() {

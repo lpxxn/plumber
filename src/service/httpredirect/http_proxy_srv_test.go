@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/lpxxn/plumber/src/common"
-	"github.com/lpxxn/plumber/src/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -207,10 +206,11 @@ func TestHttpRedirectListener_Accept(t *testing.T) {
 
 type TestHandler2 struct {
 	t *testing.T
+	v string
 }
 
 func (t TestHandler2) ServeHTTP(w http.ResponseWriter, request *http.Request) {
-	log.Info("request: %+v  --------", request)
+	t.t.Logf("v: %s request: %+v  --------", t.v, request)
 	type rev struct {
 		Name string
 		Age  int
@@ -225,7 +225,11 @@ func (t TestHandler2) ServeHTTP(w http.ResponseWriter, request *http.Request) {
 
 // curl http://127.0.0.1:7654/abc
 func TestNewWeb1(t *testing.T) {
-	http.ListenAndServe(":7654", &TestHandler2{t: t})
+	go func() {
+		t.Log("start listen 7632")
+		http.ListenAndServe(":7632", &TestHandler2{t: t, v: "7632"})
+	}()
+	http.ListenAndServe(":7654", &TestHandler2{t: t, v: "7654"})
 }
 
 func TestHttpRedirectListener_Accept2(t *testing.T) {

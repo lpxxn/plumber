@@ -8,5 +8,5 @@ httpProxy:
       - path: /api/*
         forwardTo: abc # forward to abc server
       - path: /order/:orderNO
-        forwardTo: http://127.0.0.1:5432/  # if forwardTo is not empty, then forward to the server which name is forwardTo
+        forwardTo: http://127.0.0.1:7632  # if forwardTo is not empty, then forward to the server which name is forwardTo
 
