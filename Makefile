@@ -21,3 +21,8 @@ linux_arm_srv:
 .PHONY: linux_amd_srv
 linux_amd_srv:
 	env GOOS=linux GOARCH=amd64 go build -o bin/plumber ./cmd/plumber
+
+.PHONY: install
+install:
+	go install ./cmd/plumber
+	go install ./cmd/plumber-cli
