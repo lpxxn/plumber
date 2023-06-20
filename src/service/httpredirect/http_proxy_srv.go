@@ -117,6 +117,7 @@ func (l *HttpProxySrv) Handle() {
 				log.Errorf("conn is not httpRedirectConn")
 				return
 			}
+			defer hc.Conn.Close()
 			if isClient, err := hc.CheckReadRemoteClient(); isClient {
 				log.Infof("is client %s", hc.RemoteAddr())
 				cmdType, header, err := protocol.ReadCmdHeader(hc.r)
@@ -150,21 +151,25 @@ func (l *HttpProxySrv) Handle() {
 			forwardConn, err := l.ConnByRouter(r)
 			if err != nil {
 				log.Errorf("get forward conn error: %s", err.Error())
+				hc.Write([]byte("no route matched"))
 				return
 			}
 
 			if err := req.Write(forwardConn); err != nil {
 				log.Errorf("write http request error: %s", err.Error())
+				hc.Write([]byte("write http request error"))
 				return
 			}
 			resp, err := http.ReadResponse(bufio.NewReader(forwardConn), req)
 			if err != nil {
 				log.Errorf("copy error: %s", err.Error())
+				hc.Write([]byte("copy error"))
 				return
 			}
 
 			if err := resp.Write(hc); err != nil {
 				log.Errorf("write http response error: %s", err.Error())
+				hc.Write([]byte("write http response error"))
 				return
 			}
 		}(conn)
