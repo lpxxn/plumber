@@ -2,9 +2,9 @@
     <img src="./asset/plumber.png" alt="Plumber Logo" height="80px" width="auto" />
 </p>
 
-`plumber` is a proxy for serving http and ssh.
+`plumber` is a tunnel for expose localhost http and ssh server.
 <p align="center">
-    <img src="./asset/plumber-proxy.png" alt="Plumber Logo" height="450px" width="auto" />
+    <img src="./asset/plumber-proxy.png" alt="Plumber" height="450px" width="auto" />
 </p>
 
 ## install
