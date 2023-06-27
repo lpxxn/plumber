@@ -1,0 +1,5 @@
+srvTcpAddr: 127.0.0.1:9870
+http:
+  remotePort: 9190 # remote port, same as server config port
+  uid: abc
+  localSrvAddr: 127.0.0.1:7632

@@ -117,7 +117,6 @@ func (l *HttpProxySrv) Handle() {
 				log.Errorf("conn is not httpRedirectConn")
 				return
 			}
-			defer hc.Conn.Close()
 			if isClient, err := hc.CheckReadRemoteClient(); isClient {
 				log.Infof("is client %s", hc.RemoteAddr())
 				cmdType, header, err := protocol.ReadCmdHeader(hc.r)
@@ -142,6 +141,7 @@ func (l *HttpProxySrv) Handle() {
 				return
 			}
 
+			defer hc.Conn.Close()
 			req, err := hc.GetHttpRequest()
 			if err != nil {
 				log.Errorf("get http request error: %s", err.Error())

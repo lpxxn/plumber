@@ -35,8 +35,9 @@ httpProxy:
         forwardTo: http://127.0.0.1:7632  # if forwardTo is not empty, then forward to the server which name is forwardTo
 
 ```
+`plumber -config ./config/testdata/srv.yaml`
 
-client config:
+client config1:
 ```yaml
 srvTcpAddr: 127.0.0.1:9870
 http:
@@ -44,3 +45,24 @@ http:
   uid: lpxxn
   localSrvAddr: 127.0.0.1:7654
 ```
+`plumber-cli -config ./config/testdata/cli-http-proxy.yaml`
+client config2:
+```yaml
+srvTcpAddr: 127.0.0.1:9870
+http:
+  remotePort: 9190 # remote port, same as server config port
+  uid: abc
+  localSrvAddr: 127.0.0.1:7632
+
+```
+`plumber-cli -config ./config/testdata/cli-http-proxy2.yaml`
+
+send curl request:
+```shell
+curl http://lpxxn.com:9190/api/v1/user
+curl http://lpxxn.com:9190/abc
+curl http://lpxxn.com:9190/order/123
+```
+<p align="center">
+    <img src="./asset/plumber-test.png" alt="Plumber hppt" height="400px" width="auto" />
+</p>

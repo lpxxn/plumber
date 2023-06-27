@@ -212,23 +212,23 @@ type TestHandler2 struct {
 func (t TestHandler2) ServeHTTP(w http.ResponseWriter, request *http.Request) {
 	t.t.Logf("v: %s request: %+v  --------", t.v, request)
 	type rev struct {
-		Name string
-		Age  int
+		SrvPort string
 	}
 	t.t.Logf("header: %+v", request.Header)
 	w.Header().Set("my-header", "my-header-value")
 	w.WriteHeader(http.StatusOK)
-	body, _ := json.Marshal(rev{Name: "test", Age: 18})
-	t.t.Log("=========")
+	body, _ := json.Marshal(rev{SrvPort: t.v})
 	w.Write(body)
 }
 
+// go test -v -run=TestNewWeb1
 // curl http://127.0.0.1:7654/abc
 func TestNewWeb1(t *testing.T) {
 	go func() {
 		t.Log("start listen 7632")
 		http.ListenAndServe(":7632", &TestHandler2{t: t, v: "7632"})
 	}()
+	t.Log("start listen 7654")
 	http.ListenAndServe(":7654", &TestHandler2{t: t, v: "7654"})
 }
 
