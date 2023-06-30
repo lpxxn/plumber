@@ -47,7 +47,7 @@ http:
   uid: lpxxn
   localSrvAddr: 127.0.0.1:7654
 ```
-`plumber-cli -config ./config/testdata/cli-http-proxy.yaml`
+`plumber-cli -config ./config/testdata/cli-http-proxy.yaml`    
 client config2:
 ```yaml
 srvTcpAddr: 127.0.0.1:9870
@@ -80,13 +80,13 @@ server config:
 tcpAddr: :9870
 
 ```
-run `plumber -config ./config/testdata/srv-ssh.yaml`
+run `plumber -config ./config/testdata/srv-ssh.yaml`   
 client config1:
 ```yaml
-srvTcpAddr: 127.0.0.1:9870
+srvTcpAddr: 127.0.0.1:9870 # plumber server addr
 ssh:
   srvPort: 7222 # ssh remote server port
-  localSSHAddr: 127.0.0.1:7655 # local ssh server addr
+  localSSHAddr: 127.0.0.1:7655 # local ssh server ad dr
 
 ```
 run `plumber-cli -config ./config/testdata/cli.yaml`
