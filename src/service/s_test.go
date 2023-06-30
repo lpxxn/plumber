@@ -2,6 +2,7 @@ package service
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -30,6 +31,38 @@ func TestTic(t *testing.T) {
 	}
 exit:
 	t.Log("end")
+}
+
+type myIClienter interface {
+}
+type myTClient struct {
+	Name string
+}
+
+func (c *myTClient) Run(i myIClienter) error {
+	switch i.(type) {
+	case *myTClient:
+		t := i.(*myTClient)
+		t.Name = "hello"
+		return nil
+	default:
+		if i == nil {
+			fmt.Println("interface is nil")
+			return nil
+		}
+		fmt.Println("interface is not nil")
+
+		return nil
+	}
+}
+
+func TestInterfaceFunc(t *testing.T) {
+	m := &myTClient{}
+	m.Run(nil)
+	t.Log(m.Name)
+
+	m.Run("")
+	t.Log()
 }
 
 func TestBf(t *testing.T) {
