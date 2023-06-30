@@ -85,7 +85,7 @@ client config1:
 ```yaml
 srvTcpAddr: 127.0.0.1:9870
 ssh:
-  srvPort: 7222 # ssh server port
+  srvPort: 7222 # ssh remote server port
   localSSHAddr: 127.0.0.1:7655 # local ssh server addr
 
 ```
