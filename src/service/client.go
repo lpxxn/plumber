@@ -85,6 +85,7 @@ func (c *client) startSSHProxy() error {
 			log.Errorf("sshProxy open stream failed: %v", err)
 			return
 		}
+		defer stream.Close()
 		log.Infof("stream %d is opened", stream.StreamID())
 		eg := errgroup.Group{}
 

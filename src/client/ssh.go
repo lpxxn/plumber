@@ -97,6 +97,7 @@ func (s *SSHProxy) Handle() error {
 			}
 			log.Infof("stream %d accepted", stream.StreamID())
 			go func() {
+				defer stream.Close()
 				localSSHFwdConn, err := s.ConnForwardSSHSrv()
 				if err != nil {
 					log.Errorf("connect to local ssh server [%s] failed: %s", s.sshConf.LocalSSHAddr, err.Error())
